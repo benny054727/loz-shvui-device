@@ -99,9 +99,9 @@
   .empty{color:var(--muted);padding:18px 4px;font-size:14.5px}
   .tick{width:22px;height:22px;border-radius:7px;flex:none;border:2px solid var(--study);
     background:#fff;display:grid;place-items:center;margin-top:1px}
-  .row.block.done .tick,.crit.on .tick,.goal.on .tick,.lg.on .tick{
+  .row.block.done .tick,.crit.on .tick,.goal.on .tick,.lg.on .tick,.meal.eaten .tick{
     background:var(--study);border-color:var(--study)}
-  .row.block.done .tick::after,.crit.on .tick::after,.goal.on .tick::after,.lg.on .tick::after{
+  .row.block.done .tick::after,.crit.on .tick::after,.goal.on .tick::after,.lg.on .tick::after,.meal.eaten .tick::after{
     content:"✓";color:#fff;font-size:13px;font-weight:700;line-height:1}
 
   /* ---------- דף היום ---------- */
@@ -425,6 +425,9 @@
   .libitem:last-child{border-bottom:none}
   .libitem b{font-family:'Heebo',sans-serif;font-weight:700;flex:1}
   .libitem small{color:var(--muted);font-size:12px}
+  .meal .tick{cursor:pointer;flex:none;width:20px;height:20px;margin-top:0}
+  .meal.eaten{background:var(--study-bg)}
+  .cookdone{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
 
   /* ---------- כלים ותבניות ---------- */
   .tpl{display:flex;align-items:center;gap:10px;background:var(--surface2);
@@ -448,6 +451,13 @@
   .edhead{display:grid;gap:8px;grid-template-columns:1fr 110px}
   .backup textarea{width:100%;min-height:90px;font-size:11.5px;font-family:ui-monospace,monospace;
     direction:ltr;text-align:left}
+
+  /* ---------- מעקב חודשי ---------- */
+  .mbar{height:9px;background:var(--surface2);border-radius:99px;margin-top:10px;overflow:hidden}
+  .mbar i{display:block;height:100%;background:var(--study);border-radius:99px}
+  .hrow.hit{background:var(--study-bg)}
+  .hrow.miss{background:#FBF2E2;color:#6B4E14}
+  .hrow.miss b{color:#6B4E14}
 
   footer{margin-top:24px;color:var(--muted);font-size:12.5px;text-align:center}
   @media(prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -532,6 +542,7 @@
   <div class="now-card" id="nowCard"></div>
   <div class="panel" id="todayBlocks"></div>
   <div class="panel" id="todayMeals"></div>
+  <div class="panel" id="todayHabits"></div>
   <div class="panel" id="todayGoals"></div>
   <div class="quote" id="quoteBox"></div>
 </section>
@@ -638,6 +649,7 @@
   <div class="modes" id="subNav">
     <button data-sub="goals" class="on">מטרות וסיכום</button>
     <button data-sub="food">אוכל</button>
+    <button data-sub="month">מעקב חודשי</button>
     <button data-sub="tools">כלים ותבניות</button>
   </div>
 </section>
@@ -653,6 +665,7 @@
         <select id="cookTue"></select></label>
     </div>
     <div id="cookInfo"></div>
+    <div class="cookdone" id="cookDone"></div>
   </div>
 
   <div class="panel">
@@ -735,6 +748,13 @@
   </div>
 
   <div class="panel">
+    <div class="dv-head"><h3>יעד כושר שבועי</h3><div class="scale">למעקב החודשי</div></div>
+    <p class="hint">מתחילים ב־2 אימונים בשבוע. כשמרגישים מוכנים, מעלים ל־3 — השינוי חל מרגע העדכון, לא רטרואקטיבית.</p>
+    <label class="field"><span>אימוני כושר ליעד בשבוע</span>
+      <input type="number" id="fitTarget" min="1" max="14"></label>
+  </div>
+
+  <div class="panel">
     <div class="dv-head"><h3>תבניות יום</h3><div class="scale" id="dtCount">—</div></div>
     <div id="dayTplList"></div>
     <div class="actions">
@@ -750,6 +770,41 @@
       <button class="btn" id="newEveTpl">צור תבנית ערב</button>
     </div>
     <div id="eveTplEditor"></div>
+  </div>
+</section>
+
+<!-- ============ מעקב חודשי ============ -->
+<section class="page" id="page-month">
+  <div class="panel">
+    <div class="dv-head"><h3>מעקב חודשי</h3><div class="scale" id="monthRange">—</div></div>
+    <div class="actions" style="margin:0 0 4px">
+      <button class="ghost" id="monthPrev">‹ הקודם</button>
+      <button class="ghost" id="monthThis">החודש הזה</button>
+      <button class="ghost" id="monthNext">הבא ›</button>
+    </div>
+    <p class="hint">התמונה מלאה לשבועות שסגרת (מטרות וסיכום ← סגור שבוע) ולשבוע הנוכחי. ימים ושבועות שעוד לא הגיעו לא נספרים כפספוס.</p>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>בלוקי לימודים</h3><div class="scale" id="mStudyScale">—</div></div>
+    <div class="mbar"><i id="mStudyBar" style="width:0%"></i></div>
+    <div id="mStudyMissed"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>4 ארוחות ביום</h3><div class="scale" id="mMealScale">—</div></div>
+    <div class="mbar"><i id="mMealBar" style="width:0%"></i></div>
+    <div id="mMealMissed"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>בישול · יעד 2 בשבוע</h3><div class="scale" id="mCookScale">—</div></div>
+    <div id="mCookList"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>כושר · יעד <span id="mFitTarget">—</span> בשבוע</h3><div class="scale" id="mFitScale">—</div></div>
+    <div id="mFitList"></div>
   </div>
 </section>
 
@@ -1052,6 +1107,11 @@ let errorsBank = [];       /* {lesson, text, done} */
 let assign = {};           /* "תאריך:בלוק" -> {lesson, stage, a, b, idx, of} */
 let cookPlan = {};         /* תאריך תחילת שבוע -> {sat:dishId, tue:dishId} */
 let menu = {};             /* "תאריך:slot" -> מזהה ארוחה */
+let eaten = {};            /* "תאריך:slot" -> true, אכלתי בפועל */
+let workouts = {};         /* "תאריך" -> true, עשיתי כושר */
+let cooked = {};           /* תאריך תחילת שבוע -> {sat:bool, tue:bool}, בישלתי בפועל */
+let fitnessTarget = 2;     /* יעד אימוני כושר לשבוע */
+let monthView = iso(new Date()).slice(0,8) + "01";   /* ה־1 בחודש המוצג במעקב החודשי */
 let unassigned = [];       /* פריטים שלא נכנסו לשבוע */
 let noStudy = ["2026-09-11","2026-09-12","2026-09-13","2026-09-20","2026-09-21",
                "2026-09-25","2026-09-26","2026-10-03"];   /* חגי תשרי */
@@ -1116,6 +1176,79 @@ function eveTpl(k){ return customEves[k] || BUILTIN_EVES[k] || BUILTIN_EVES.none
 function allDays(){ return Object.assign({}, BUILTIN_DAYS, customDays); }
 function allEves(){ return Object.assign({}, BUILTIN_EVES, customEves); }
 const blocksOf = tpl => tpl.rows.filter(r=>r.block).length;
+
+/* ============ מעקב חודשי — עזרים ============ */
+const MONTH_NAMES = ["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי",
+                      "אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"];
+function monthStartOf(iso1){ return iso1.slice(0,8)+"01"; }
+function addMonths(iso1, n){
+  const p = iso1.split("-").map(Number);
+  const d = new Date(p[0], p[1]-1+n, 1);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-01";
+}
+function daysInMonth(iso1){
+  const p = iso1.split("-").map(Number);
+  return new Date(p[0], p[1], 0).getDate();
+}
+function monthLabelHe(iso1){
+  const p = iso1.split("-").map(Number);
+  return MONTH_NAMES[p[1]-1]+" "+p[0];
+}
+function monthDates(iso1){
+  const n = daysInMonth(iso1), p = iso1.split("-").map(Number), out = [];
+  for(let i=1;i<=n;i++) out.push(p[0]+"-"+String(p[1]).padStart(2,"0")+"-"+String(i).padStart(2,"0"));
+  return out;
+}
+function weeksInMonth(iso1){
+  const start = sundayOf(new Date(iso1+"T12:00:00"));
+  const last = addDays(iso1, daysInMonth(iso1)-1);
+  const out = [];
+  let ws = start;
+  while(ws <= last){ out.push(ws); ws = addDays(ws,7); }
+  return out;
+}
+/* מטרת בלוקים ליום נתון: לפי התאמה אישית, ואם אין — לפי התבנית הקבועה של יום השבוע הזה */
+function dayTargetFor(dateISO){
+  if(overrides[dateISO]) return overrides[dateISO].target;
+  const wd = new Date(dateISO+"T12:00:00").getDay();
+  const cfg = week[wd] || {day:"none"};
+  return dayTpl(cfg.day).target;
+}
+/* רשומת יום מהיסטוריה של שבוע שנסגר, אם קיימת */
+function historyDayFor(dateISO){
+  for(const h of history){
+    if(!h.days) continue;
+    const found = h.days.find(d=>d.date===dateISO);
+    if(found) return found;
+  }
+  return null;
+}
+/* בלוקי לימוד ליום נתון: לפי done[] אם קיים, אחרת לפי היסטוריה, אחרת (יום עבר) 0, אחרת אין נתון עדיין */
+function dayStudyInfo(dateISO){
+  const target = dayTargetFor(dateISO);
+  let marked;
+  if(done.hasOwnProperty(dateISO)) marked = (done[dateISO]||[]).length;
+  else{
+    const hd = historyDayFor(dateISO);
+    if(hd) marked = hd.marked;
+    else if(dateISO < todayISO()) marked = 0;
+    else marked = null;
+  }
+  return {target, marked};
+}
+function dayMealsInfo(dateISO){
+  const done1 = MEAL_SLOTS.filter(([slot])=>eaten[dateISO+":"+slot]).length;
+  return {target:4, done:done1};
+}
+function weekCookedInfo(ws){
+  const c = cooked[ws] || {sat:false, tue:false};
+  return {done:(c.sat?1:0)+(c.tue?1:0), target:2, sat:!!c.sat, tue:!!c.tue};
+}
+function weekFitnessInfo(ws){
+  let cnt = 0;
+  for(let i=0;i<7;i++) if(workouts[addDays(ws,i)]) cnt++;
+  return {done:cnt, target:fitnessTarget};
+}
 
 function dayWord(n, target){
   if(n === 0) return ["עוד לא התחלת","הבלוק הראשון הוא ההתחלה"];
@@ -1440,18 +1573,46 @@ function renderToday(){
   });
 
   /* ארוחות היום */
+  const today0 = todayISO();
+  const eatenToday = MEAL_SLOTS.filter(([slot])=>eaten[today0+":"+slot]).length;
   const anyMeal = MEAL_SLOTS.some(([slot])=>mealOf(i, slot));
   document.getElementById("todayMeals").innerHTML = `
     <div class="dv-head"><h3>ארוחות היום</h3>
-      <div class="scale">${cycleDish(i) ? esc(cycleDish(i).name) : "לא נבחרה מנה"}</div></div>
-    ${anyMeal ? `<div class="meals">${MEAL_SLOTS.map(([slot,label,time])=>{
+      <div class="scale">${eatenToday} מתוך 4 סומנו כנאכלו</div></div>
+    <div class="meals">${MEAL_SLOTS.map(([slot,label,time])=>{
         const nm = mealLabel(i, slot);
         const tm = toMin(time);
         const isNow = now >= tm - 45 && now < tm + 90;
-        return `<div class="meal ${nm?"":"empty"} ${isNow?"now":""}">
-          <b>${time}</b><span>${nm ? esc(nm) : label + " — לא נקבע"}</span></div>`;
-      }).join("")}</div>`
-      : `<p class="empty">אפשר לקבוע את התפריט בעוד ← אוכל.</p>`}`;
+        const ate = !!eaten[today0+":"+slot];
+        return `<div class="meal ${nm?"":"empty"} ${isNow?"now":""} ${ate?"eaten":""}">
+          <b>${time}</b><span>${nm ? esc(nm) : label + " — לא נקבע"}</span>
+          <span class="tick" role="checkbox" tabindex="0" aria-checked="${ate}"
+                aria-label="אכלתי ${esc(label)}" data-eatslot="${slot}"></span></div>`;
+      }).join("")}</div>
+    ${anyMeal ? "" : `<p class="hint" style="margin:10px 0 0">אפשר לקבוע גם את התפריט בעוד ← אוכל.</p>`}`;
+
+  document.querySelectorAll("[data-eatslot]").forEach(el=>{
+    const hit = ()=>{
+      const k = today0+":"+el.dataset.eatslot;
+      if(eaten[k]) delete eaten[k]; else eaten[k] = true;
+      renderAll(); save();
+    };
+    el.addEventListener("click", hit);
+    el.addEventListener("keydown", e=>{ if(e.key===" "||e.key==="Enter"){ e.preventDefault(); hit(); } });
+  });
+
+  /* כושר */
+  const won = !!workouts[today0];
+  const wInfo = weekFitnessInfo(sundayOf(new Date()));
+  document.getElementById("todayHabits").innerHTML = `
+    <div class="dv-head"><h3>כושר</h3>
+      <div class="scale">${wInfo.done} מתוך ${wInfo.target} השבוע</div></div>
+    <button class="bigbtn ${won?"undo":""}" id="workoutToggle">
+      ${won ? "בוצע כושר היום ✓ — לביטול" : "עשיתי כושר היום"}</button>`;
+  document.getElementById("workoutToggle").addEventListener("click", ()=>{
+    if(workouts[today0]) delete workouts[today0]; else workouts[today0] = true;
+    renderAll(); save();
+  });
 
   /* מטרות פתוחות */
   const open = goals.filter(g=>!g.done);
@@ -1795,6 +1956,20 @@ function renderFood(){
   document.getElementById("cookInfo").innerHTML = info
     ? `<div style="margin-top:12px">${info}</div>`
     : `<p class="empty">בוחרים שתי מנות והשבוע מסודר.</p>`;
+
+  const cd = cooked[weekStart] || {sat:false, tue:false};
+  document.getElementById("cookDone").innerHTML = `
+    <button class="chip ${cd.sat?"on":""}" data-cooked="sat">בישלתי במוצ״ש</button>
+    <button class="chip ${cd.tue?"on":""}" data-cooked="tue">בישלתי בשלישי</button>`;
+  document.querySelectorAll("[data-cooked]").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      const k = b.dataset.cooked;
+      const cur = Object.assign({sat:false,tue:false}, cooked[weekStart]);
+      cur[k] = !cur[k];
+      cooked[weekStart] = cur;
+      renderAll(); save();
+    });
+  });
 
   /* תפריט */
   let filled = 0;
@@ -2200,6 +2375,79 @@ function closeWeek(){
 
 function renderPage2(){ renderGoals(); renderReview(); renderTrend(); renderHistory(); }
 
+/* ============ מעקב חודשי ============ */
+function renderMonth(){
+  document.getElementById("monthRange").textContent = monthLabelHe(monthView);
+  const dates = monthDates(monthView);
+  const today = todayISO();
+
+  /* בלוקי לימודים */
+  let sTarget=0, sMarked=0; const sMissed=[];
+  dates.forEach(d=>{
+    const {target, marked} = dayStudyInfo(d);
+    if(!target || marked===null) return;
+    sTarget += target; sMarked += Math.min(marked, target);
+    if(marked < target) sMissed.push({date:d, have:marked, need:target});
+  });
+  const sPct = sTarget ? Math.round(sMarked/sTarget*100) : 0;
+  document.getElementById("mStudyScale").textContent =
+    sTarget ? `${sMarked} מתוך ${sTarget} בלוקים · ${sPct}%` : "עדיין אין ימים שעברו החודש";
+  document.getElementById("mStudyBar").style.width = sPct+"%";
+  document.getElementById("mStudyMissed").innerHTML = sMissed.length
+    ? `<div class="hist">${sMissed.slice().reverse().map(m=>
+        `<div class="hrow miss"><b>${short(m.date)}</b><span>פספסת ${m.need-m.have} בלוקים (${m.have} מתוך ${m.need})</span></div>`).join("")}</div>`
+    : `<p class="empty">${sTarget ? "לא פספסת אף יום עד כה החודש." : "עדיין אין ימים שעברו החודש."}</p>`;
+
+  /* ארוחות */
+  let mTarget=0, mDone=0; const mMissed=[];
+  dates.filter(d=>d<today).forEach(d=>{
+    const {target, done} = dayMealsInfo(d);
+    mTarget += target; mDone += done;
+    if(done < target) mMissed.push({date:d, have:done, need:target});
+  });
+  const mPct = mTarget ? Math.round(mDone/mTarget*100) : 0;
+  document.getElementById("mMealScale").textContent =
+    mTarget ? `${mDone} מתוך ${mTarget} ארוחות · ${mPct}%` : "עדיין אין ימים שעברו החודש";
+  document.getElementById("mMealBar").style.width = mPct+"%";
+  document.getElementById("mMealMissed").innerHTML = mMissed.length
+    ? `<div class="hist">${mMissed.slice().reverse().map(m=>
+        `<div class="hrow miss"><b>${short(m.date)}</b><span>${m.have} מתוך ${m.need} ארוחות</span></div>`).join("")}</div>`
+    : `<p class="empty">${mTarget ? "כל יום שעבר — 4 ארוחות מלאות." : "עדיין אין ימים שעברו החודש."}</p>`;
+
+  /* בישול וכושר — לפי שבועות שהסתיימו במהלך החודש */
+  const weeks = weeksInMonth(monthView);
+  const pastWeeks = weeks.filter(ws=>addDays(ws,6) <= today);
+
+  let cookHit=0;
+  const cookRows = pastWeeks.map(ws=>{
+    const info = weekCookedInfo(ws);
+    if(info.done>=info.target) cookHit++;
+    return {ws, info};
+  });
+  document.getElementById("mCookScale").textContent = pastWeeks.length
+    ? `${cookHit} מתוך ${pastWeeks.length} שבועות בקצב` : "עדיין אין שבוע שהסתיים החודש";
+  document.getElementById("mCookList").innerHTML = cookRows.length
+    ? `<div class="hist">${cookRows.slice().reverse().map(({ws,info})=>
+        `<div class="hrow ${info.done>=info.target?"hit":"miss"}"><b>${rangeText(ws)}</b>
+          <span>${info.done} מתוך ${info.target} — ${info.sat?"מוצ״ש ✓":"מוצ״ש ✗"} · ${info.tue?"שלישי ✓":"שלישי ✗"}</span></div>`).join("")}</div>`
+    : `<p class="empty">סמנו "בישלתי בפועל" בדף האוכל כדי לעקוב.</p>`;
+
+  let fitHit=0;
+  const fitRows = pastWeeks.map(ws=>{
+    const info = weekFitnessInfo(ws);
+    if(info.done>=info.target) fitHit++;
+    return {ws, info};
+  });
+  document.getElementById("mFitTarget").textContent = fitnessTarget;
+  document.getElementById("mFitScale").textContent = pastWeeks.length
+    ? `${fitHit} מתוך ${pastWeeks.length} שבועות בקצב` : "עדיין אין שבוע שהסתיים החודש";
+  document.getElementById("mFitList").innerHTML = fitRows.length
+    ? `<div class="hist">${fitRows.slice().reverse().map(({ws,info})=>
+        `<div class="hrow ${info.done>=info.target?"hit":"miss"}"><b>${rangeText(ws)}</b>
+          <span>${info.done} מתוך ${info.target} אימונים</span></div>`).join("")}</div>`
+    : `<p class="empty">סמנו "עשיתי כושר היום" בדף היום כדי לעקוב.</p>`;
+}
+
 /* ============ כלים: תבניות ============ */
 /* נרמול שעה לפורמט 24 שעות — "930" → 09:30, "9:5" → 09:05 */
 function normTime(v){
@@ -2232,6 +2480,9 @@ function toneSelect(v, attrs){
 }
 
 function renderTools(){
+  const ft = document.getElementById("fitTarget");
+  if(ft) ft.value = fitnessTarget;
+
   const dl = document.getElementById("dayTplList");
   const all = allDays();
   document.getElementById("dtCount").textContent =
@@ -2501,7 +2752,7 @@ function stateObj(){
   return {v:6, weekStart, week, done, notes, review, goals, longGoals,
           history, customDays, customEves, overrides,
           course, lessons, focus, weekPlan, blockLink, errorsBank, noStudy,
-          assign, unassigned, cookPlan, menu};
+          assign, unassigned, cookPlan, menu, eaten, workouts, cooked, fitnessTarget};
 }
 /* גרסאות ישנות שמרו לפי מספר יום (0..6) — ממירים לתאריכים */
 function migrateKeys(){
@@ -2540,6 +2791,10 @@ function applyState(s){
   if(s.unassigned) unassigned = s.unassigned;
   if(s.cookPlan) cookPlan = s.cookPlan;
   if(s.menu) menu = s.menu;
+  if(s.eaten) eaten = s.eaten;
+  if(s.workouts) workouts = s.workouts;
+  if(s.cooked) cooked = s.cooked;
+  if(s.fitnessTarget) fitnessTarget = s.fitnessTarget;
   migrateKeys();
 }
 function exportBackup(){
@@ -2603,7 +2858,7 @@ function load(){
 function renderAll(){
   renderToday(); renderDate(); renderWeek(); renderDay();
   renderStats(); renderOverview(); renderCourse(); renderFood(); renderPage2();
-  renderTools(); renderOvEditor();
+  renderTools(); renderOvEditor(); renderMonth();
 }
 
 /* ============ חיווט ============ */
@@ -2750,6 +3005,19 @@ document.getElementById("newDayTpl").addEventListener("click", ()=>{
 document.getElementById("newEveTpl").addEventListener("click", ()=>{
   editEve = {key:"e"+Date.now(), name:"תבנית ערב חדשה", items:[["נסיעה לדירה",30,"work"]]};
   renderEveEditor();
+});
+document.getElementById("fitTarget").addEventListener("change", ()=>{
+  fitnessTarget = Math.max(1, +document.getElementById("fitTarget").value || fitnessTarget);
+  renderAll(); save();
+});
+document.getElementById("monthPrev").addEventListener("click", ()=>{
+  monthView = addMonths(monthView, -1); renderMonth();
+});
+document.getElementById("monthNext").addEventListener("click", ()=>{
+  monthView = addMonths(monthView, 1); renderMonth();
+});
+document.getElementById("monthThis").addEventListener("click", ()=>{
+  monthView = monthStartOf(todayISO()); renderMonth();
 });
 
 /* כפתור שמירה ידנית — שומר את כל המצב (השבוע הנוכחי, התפריט, מטרות וכו') ומראה אישור */
