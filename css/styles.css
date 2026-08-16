@@ -449,6 +449,9 @@
   .hrow.miss{background:#FBF2E2;color:#6B4E14}
   .hrow.miss b{color:#6B4E14}
   #monthRange{direction:ltr;unicode-bidi:isolate}
+  .calnav{display:flex;align-items:center;gap:7px;margin:12px 0 4px}
+  .calnav select{flex:1;min-width:0;text-align:center}
+  .calnav .ghost{flex:none;padding:8px 13px;font-size:15px;line-height:1}
   .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
   .calgrid + .calgrid{margin-top:4px}
   .calhd{text-align:center;font-size:11px;color:var(--muted);

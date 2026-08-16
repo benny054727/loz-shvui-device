@@ -288,7 +288,9 @@ let cooked = {};           /* תאריך תחילת שבוע -> {sat:bool, tue:b
 let fitnessTarget = 2;     /* יעד אימוני כושר לשבוע */
 let monthAnchorDay = null; /* יום־בחודש שממנו מתחילה כל "תקופה" במעקב החודשי (נקבע פעם אחת, לפי היום הראשון שנפתח המעקב) */
 let monthView = null;      /* תאריך תחילת התקופה המוצגת כרגע במעקב החודשי */
-let selectedCalDay = null; /* היום שנבחר בלוח השנה של המעקב החודשי */
+let selectedCalDay = null; /* היום שנבחר בלוח השנה */
+let calYear  = null;       /* לוח השנה — עצמאי מהתקופה, חודש קלנדרי מלא (1 עד סוף החודש) */
+let calMonth = null;       /* 1..12 */
 let unassigned = [];       /* פריטים שלא נכנסו לשבוע */
 let noStudy = ["2026-09-11","2026-09-12","2026-09-13","2026-09-20","2026-09-21",
                "2026-09-25","2026-09-26","2026-10-03"];   /* חגי תשרי */
@@ -397,6 +399,22 @@ function weeksInPeriod(startISO){
 function ensureMonthAnchor(){
   if(monthAnchorDay == null) monthAnchorDay = new Date().getDate();
   if(monthView == null) monthView = periodStartFor(todayISO());
+}
+
+/* ============ לוח שנה — עזרים ============
+   עצמאי לגמרי מהתקופה שמעל: חודש קלנדרי רגיל, מ-1 עד סוף החודש, עם בחירת חודש/שנה. */
+const HE_MONTHS = ["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי",
+                    "אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"];
+function calMonthDates(y, m){
+  const dim = daysInCalMonth(y, m), out = [];
+  for(let i=1;i<=dim;i++) out.push(y+"-"+String(m).padStart(2,"0")+"-"+String(i).padStart(2,"0"));
+  return out;
+}
+function ensureCalDate(){
+  if(calYear == null || calMonth == null){
+    const t = new Date();
+    calYear = t.getFullYear(); calMonth = t.getMonth()+1;
+  }
 }
 /* מטרת בלוקים ליום נתון: לפי התאמה אישית, ואם אין — לפי התבנית הקבועה של יום השבוע הזה */
 function dayTargetFor(dateISO){
@@ -1639,8 +1657,22 @@ function renderMonth(){
         `<div class="hrow ${info.done>=info.target?"hit":"miss"}"><b>${rangeText(ws)}</b>
           <span>${info.done} מתוך ${info.target} אימונים</span></div>`).join("")}</div>`
     : `<p class="empty">סמנו "עשיתי כושר היום" בדף היום כדי לעקוב.</p>`;
+}
 
-  renderCalendar(dates);
+/* לוח שנה — חודש קלנדרי מלא, עצמאי מהתקופה שמעל; ניווט בין חודשים/שנים */
+function renderCalendarPanel(){
+  ensureCalDate();
+  const monthSel = document.getElementById("calMonthSel");
+  monthSel.innerHTML = HE_MONTHS.map((n,i)=>
+    `<option value="${i+1}" ${i+1===calMonth?"selected":""}>${n}</option>`).join("");
+  const yearSel = document.getElementById("calYearSel");
+  const thisYear = new Date().getFullYear();
+  const years = new Set([calYear]);
+  for(let y=thisYear-3;y<=thisYear+3;y++) years.add(y);
+  yearSel.innerHTML = Array.from(years).sort((a,b)=>a-b).map(y=>
+    `<option value="${y}" ${y===calYear?"selected":""}>${y}</option>`).join("");
+
+  renderCalendar(calMonthDates(calYear, calMonth));
 }
 
 /* לוח החודש — כל יום לחיץ, מציג פירוט מלא בכל התחומים */
@@ -2117,7 +2149,7 @@ function load(){ loadLocal(); renderAll(); }
 function renderAll(){
   renderToday(); renderDate(); renderWeek(); renderDay();
   renderStats(); renderOverview(); renderCourse(); renderFood(); renderPage2();
-  renderTools(); renderOvEditor(); renderMonth();
+  renderTools(); renderOvEditor(); renderMonth(); renderCalendarPanel();
 }
 
 /* ============ חיווט ============ */
@@ -2277,6 +2309,22 @@ document.getElementById("monthNext").addEventListener("click", ()=>{
 });
 document.getElementById("monthThis").addEventListener("click", ()=>{
   monthView = periodStartFor(todayISO()); selectedCalDay = null; renderMonth();
+});
+document.getElementById("calPrev").addEventListener("click", ()=>{
+  ensureCalDate();
+  calMonth--; if(calMonth<1){ calMonth=12; calYear--; }
+  selectedCalDay = null; renderCalendarPanel();
+});
+document.getElementById("calNext").addEventListener("click", ()=>{
+  ensureCalDate();
+  calMonth++; if(calMonth>12){ calMonth=1; calYear++; }
+  selectedCalDay = null; renderCalendarPanel();
+});
+document.getElementById("calMonthSel").addEventListener("change", e=>{
+  calMonth = +e.target.value; selectedCalDay = null; renderCalendarPanel();
+});
+document.getElementById("calYearSel").addEventListener("change", e=>{
+  calYear = +e.target.value; selectedCalDay = null; renderCalendarPanel();
 });
 
 /* כפתור שמירה ידנית — שומר את כל המצב (השבוע הנוכחי, התפריט, מטרות וכו') ומראה אישור */

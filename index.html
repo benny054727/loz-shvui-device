@@ -288,7 +288,13 @@
   </div>
 
   <div class="panel">
-    <div class="dv-head"><h3>לוח התקופה</h3><div class="scale">לחצו על יום לפירוט</div></div>
+    <div class="dv-head"><h3>לוח שנה</h3><div class="scale">לחצו על יום לפירוט</div></div>
+    <div class="calnav">
+      <button class="ghost" id="calPrev" aria-label="חודש קודם">‹</button>
+      <select id="calMonthSel" aria-label="חודש"></select>
+      <select id="calYearSel" aria-label="שנה"></select>
+      <button class="ghost" id="calNext" aria-label="חודש הבא">›</button>
+    </div>
     <div class="calgrid" id="calHead"></div>
     <div class="calgrid" id="calGrid"></div>
     <div id="calDetail"></div>
