@@ -556,7 +556,6 @@
   </div>
 </section>
 
-<!-- ============ מבט שבועי ============ -->
 <!-- ============ קורס ============ -->
 <section class="page" id="page-course">
   <div class="goalcard" id="courseGoal"></div>
@@ -1319,8 +1318,7 @@ function renderToday(){
   const marks = doneOf(i);
 
   const timed = rows.filter(r=>r.t);
-  let cur = timed.find(r=> now >= r.startM && now < r.endM);
-  if(!cur && timed.length && now < timed[0].startM) cur = null;
+  const cur = timed.find(r=> now >= r.startM && now < r.endM);
   const idx = cur ? rows.indexOf(cur) : -1;
   const nxt = idx >= 0 ? rows.slice(idx+1).find(r=>r.what || r.block) : timed[0];
 
@@ -1981,7 +1979,7 @@ function renderCourse(){
   document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click", ()=>{
     focus.lesson = +b.dataset.goto;
     const nxt = STAGES.find(([st])=>!stageDone(focus.lesson, st));
-    focus.stage = nxt ? nxt[0] : "read";
+    focus.stage = nxt ? nxt[0] : "study";
     renderAll(); save();
   }));
 
@@ -2548,15 +2546,28 @@ function showJson(){
 }
 
 /* ============ שמירה ============ */
+let saveFailed = false;
 function save(){
-  try{ localStorage.setItem('loz:v6', JSON.stringify(stateObj())); }catch(e){}
+  try{
+    localStorage.setItem('loz:v6', JSON.stringify(stateObj()));
+    saveFailed = false;
+  }catch(e){
+    if(!saveFailed){
+      saveFailed = true;
+      alert("השמירה נכשלה — כנראה שאין מקום פנוי בדפדפן. מומלץ לייצא גיבוי (עוד ← כלים) ולפנות מקום.");
+    }
+  }
 }
 function load(){
   try{
     const raw = localStorage.getItem('loz:v6') || localStorage.getItem('loz:v5') ||
                 localStorage.getItem('loz:v4') || localStorage.getItem('loz:v3') ||
                 localStorage.getItem('loz:v2');
-    if(raw) applyState(JSON.parse(raw));
+    if(raw){
+      applyState(JSON.parse(raw));
+      save();   /* שומר בפורמט v6 */
+      ['loz:v2','loz:v3','loz:v4','loz:v5'].forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
+    }
   }catch(e){}
   renderAll();
 }
