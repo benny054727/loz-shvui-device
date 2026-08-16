@@ -278,17 +278,8 @@
 <!-- ============ מעקב חודשי ============ -->
 <section class="page" id="page-month">
   <div class="panel">
-    <div class="dv-head"><h3>מעקב חודשי</h3><div class="scale" id="monthRange">—</div></div>
-    <div class="actions" style="margin:0 0 4px">
-      <button class="ghost" id="monthPrev">‹ הקודם</button>
-      <button class="ghost" id="monthThis">החודש הזה</button>
-      <button class="ghost" id="monthNext">הבא ›</button>
-    </div>
-    <p class="hint">התקופה היא חודש מתגלגל שמתחיל ביום שבו פתחת לראשונה את המעקב, לא בהכרח ב־1 לחודש. התמונה מלאה לשבועות שסגרת (מטרות וסיכום ← סגור שבוע) ולשבוע הנוכחי. ימים ושבועות שעוד לא הגיעו לא נספרים כפספוס.</p>
-  </div>
-
-  <div class="panel">
-    <div class="dv-head"><h3>לוח שנה</h3><div class="scale">לחצו על יום לפירוט</div></div>
+    <div class="dv-head"><h3>מעקב חודשי</h3><div class="scale">לחצו על יום לפירוט</div></div>
+    <p class="hint">כל יום בחודש הנבחר, עם שלוש נקודות סטטוס (לימודים · ארוחות · כושר). לחיצה על יום מציגה פירוט מלא בכל התחומים, כולל בישול לפי השבוע שהיום שייך אליו.</p>
     <div class="calnav">
       <button class="ghost" id="calPrev" aria-label="חודש קודם">‹</button>
       <select id="calMonthSel" aria-label="חודש"></select>
@@ -298,28 +289,6 @@
     <div class="calgrid" id="calHead"></div>
     <div class="calgrid" id="calGrid"></div>
     <div id="calDetail"></div>
-  </div>
-
-  <div class="panel">
-    <div class="dv-head"><h3>בלוקי לימודים</h3><div class="scale" id="mStudyScale">—</div></div>
-    <div class="mbar"><i id="mStudyBar" style="width:0%"></i></div>
-    <div id="mStudyMissed"></div>
-  </div>
-
-  <div class="panel">
-    <div class="dv-head"><h3>4 ארוחות ביום</h3><div class="scale" id="mMealScale">—</div></div>
-    <div class="mbar"><i id="mMealBar" style="width:0%"></i></div>
-    <div id="mMealMissed"></div>
-  </div>
-
-  <div class="panel">
-    <div class="dv-head"><h3>בישול · יעד 2 בשבוע</h3><div class="scale" id="mCookScale">—</div></div>
-    <div id="mCookList"></div>
-  </div>
-
-  <div class="panel">
-    <div class="dv-head"><h3>כושר · יעד <span id="mFitTarget">—</span> בשבוע</h3><div class="scale" id="mFitScale">—</div></div>
-    <div id="mFitList"></div>
   </div>
 </section>
 
