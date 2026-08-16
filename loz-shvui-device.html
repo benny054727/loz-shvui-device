@@ -1700,12 +1700,13 @@ function cycleDish(i){
   if(i >= 3 && i <= 5) return dishById(c.tue);
   return dishById(c.tue) || dishById(c.sat);
 }
-function mealOptions(slot, i){
+function mealOptions(slot, i, val){
   const d = cycleDish(i);
   if(slot === "b") return BREAKFASTS.map(x=>[x.id, x.name]);
   if(slot === "s") return SNACKS.map(x=>[x.id, x.name]);
   const list = [];
   if(d) list.push(["cycle", d.name + " — " + (slot === "l" ? d.lunch : d.dinner)]);
+  else if(val === "cycle") list.push(["cycle", "המנה השבועית — עדיין לא נבחרה (קבעו ב\"מה מבשלים השבוע\")"]);
   DISHES.forEach(x=>{ if(!d || x.id !== d.id) list.push([x.id, x.name]); });
   QUICK.forEach(x=>list.push([x.id, x.name]));
   return list;
@@ -1714,7 +1715,8 @@ function mealName(slot, i, val){
   if(!val) return "";
   if(val === "cycle"){
     const d = cycleDish(i);
-    return d ? d.name + " — " + (slot === "l" ? d.lunch : d.dinner) : "";
+    return d ? d.name + " — " + (slot === "l" ? d.lunch : d.dinner)
+             : "המנה השבועית — עדיין לא נבחרה";
   }
   const all = [].concat(DISHES, BREAKFASTS, SNACKS, QUICK).find(x=>x.id===val);
   return all ? all.name : "";
@@ -1781,7 +1783,7 @@ function renderFood(){
         return `<div class="mrow"><span class="mt">${time}</span>
           <select data-meal="${i}:${slot}">
             <option value="">— ${label} —</option>
-            ${mealOptions(slot,i).map(([v,n])=>
+            ${mealOptions(slot,i,val).map(([v,n])=>
               `<option value="${v}" ${v===val?"selected":""}>${esc(n)}</option>`).join("")}
           </select></div>`;
       }).join("")}
