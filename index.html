@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>בונה הלוז השבועי</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;900&family=Assistant:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="authwrap" id="authWrap" hidden>
+  <div class="authbox">
+    <h1 id="authTitle">התחברות</h1>
+    <p class="sub" id="authSub">כדי לסנכרן את הלוז בין המכשירים שלך.</p>
+    <div class="err" id="authErr" hidden></div>
+    <label class="field"><span>אימייל</span><input type="email" id="authEmail" autocomplete="email"></label>
+    <label class="field"><span>סיסמה (לפחות 6 תווים)</span><input type="password" id="authPass" autocomplete="current-password"></label>
+    <div class="actions">
+      <button class="btn bigbtn" id="authSubmit">התחברות</button>
+      <button class="switch" id="authSwitch">אין לך חשבון? להרשמה</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow" id="hdrEyebrow">גרסה למכשיר שלך · 9 · מערכת האוכל</div>
+  <h1 id="hdrTitle">בונה הלוז השבועי</h1>
+  <p class="sub" id="hdrSub">היום שלי, בניית השבוע, מבט מלא, מטרות וכלים.</p>
+</header>
+
+<!-- ============ היום שלי ============ -->
+<section class="page on" id="page-today">
+  <div class="now-card" id="nowCard"></div>
+  <div class="panel" id="todayBlocks"></div>
+  <div class="panel" id="todayMeals"></div>
+  <div class="panel" id="todayHabits"></div>
+  <div class="panel" id="todayGoals"></div>
+  <div class="quote" id="quoteBox"></div>
+</section>
+
+<!-- ============ לוז שבועי ============ -->
+<section class="page" id="page-plan">
+  <div class="datebar">
+    <label for="wstart">שבוע שמתחיל ביום ראשון</label>
+    <input type="date" id="wstart">
+    <div class="range" id="rangeTxt">—</div>
+    <div class="spacer"></div>
+    <button class="btn" id="pdfBtn">הפק PDF</button>
+  </div>
+
+  <div class="modes" id="planModes">
+    <button data-mode="day" class="on">יום</button>
+    <button data-mode="week">כל השבוע</button>
+  </div>
+
+  <div class="weekbar">
+    <div class="stat target"><b id="wTarget">—</b><span>יעד בלוקים לשבוע</span></div>
+    <div class="stat max"><b id="wMax">—</b><span>פוטנציאל אם הכול שקט</span></div>
+    <div class="stat"><b id="wHours">—</b><span>לימוד נטו ביעד · <i id="hoursCalc"></i></span></div>
+    <div class="stat"><b id="wDone">—</b><span>בלוקים שסימנת השבוע</span></div>
+  </div>
+
+  <div id="planBanner"></div>
+  <div id="planDayWrap">
+    <div class="ovdays" id="planDays"></div>
+    <div id="dayEditor"></div>
+    <div class="dayview" id="dayview"></div>
+    <div id="ovEditor"></div>
+    <details class="weeklist">
+      <summary>סקירת כל השבוע בשורות</summary>
+      <div id="weekRows"></div>
+    </details>
+  </div>
+
+  <div id="planWeekWrap" hidden>
+    <div class="ovhead">
+      <div class="scale" id="ovSummary">—</div>
+    </div>
+    <div id="ovGrid"></div>
+  </div>
+</section>
+
+<!-- ============ קורס ============ -->
+<section class="page" id="page-course">
+  <div class="goalcard" id="courseGoal"></div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>על מה אני עובד עכשיו</h3>
+      <div class="scale" id="focusNote">—</div></div>
+    <div id="focusBox"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>שיעורי השבוע</h3>
+      <div class="scale" id="wkRange">—</div></div>
+    <div class="wk" id="wkChips"></div>
+    <div class="loadbox" id="loadBox">—</div>
+    <div class="actions">
+      <button class="btn" id="allocBtn">שבץ לשבוע</button>
+      <button class="ghost" id="allocClear">נקה שיבוץ</button>
+    </div>
+    <div id="allocPreview"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>כל השיעורים</h3>
+      <div class="scale" id="lsnNote">—</div></div>
+    <div id="lsnList"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>בנק טעויות</h3>
+      <div class="scale" id="errNote">—</div></div>
+    <p class="hint">שאלות שטעית בהן. אלה חומר החזרה של תחילת יום הלימודים הבא.</p>
+    <div class="addgoal">
+      <input type="text" id="errInput" placeholder="לדוגמה: חישוב תשואה ריאלית מול נומינלית">
+      <button class="btn" id="addErr">הוסף</button>
+    </div>
+    <div id="errList"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>הגדרות הקורס</h3></div>
+    <div class="ed">
+      <div class="edhead">
+        <input type="text" id="cName" placeholder="שם הקורס">
+        <input type="number" id="cTotal" min="1" max="99" placeholder="שיעורים">
+      </div>
+      <label class="field"><span>תאריך יעד לסיום</span><input type="date" id="cDeadline"></label>
+      <label class="field"><span>עמודים בבלוק אחד (קריאה + השמעה)</span>
+        <input type="number" id="cPpb" min="1" max="60"></label>
+      <label class="field"><span>דקות ל־15 השאלות</span>
+        <input type="number" id="cQmin" min="0" max="300"></label>
+      <div class="actions"><button class="btn" id="saveCourse">שמור הגדרות</button></div>
+    </div>
+  </div>
+</section>
+
+<section class="page" id="page-more">
+  <div class="modes" id="subNav">
+    <button data-sub="goals" class="on">מטרות וסיכום</button>
+    <button data-sub="food">אוכל</button>
+    <button data-sub="month">מעקב חודשי</button>
+    <button data-sub="tools">כלים ותבניות</button>
+  </div>
+</section>
+
+<section class="page" id="page-food">
+  <div class="panel">
+    <div class="dv-head"><h3>מה מבשלים השבוע</h3>
+      <div class="scale" id="cookRange">—</div></div>
+    <div class="selects">
+      <label class="field"><span>מוצ״ש — לראשון עד שלישי</span>
+        <select id="cookSat"></select></label>
+      <label class="field"><span>שלישי — לרביעי עד שישי</span>
+        <select id="cookTue"></select></label>
+    </div>
+    <div id="cookInfo"></div>
+    <div class="cookdone" id="cookDone"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>תפריט השבוע</h3>
+      <div class="scale" id="menuNote">—</div></div>
+    <div class="actions" style="margin:0 0 12px">
+      <button class="ghost" id="menuFill">מלא לפי ברירת מחדל</button>
+      <button class="ghost" id="menuClear">נקה תפריט</button>
+    </div>
+    <div id="menuGrid"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>המאגרים</h3><div class="scale">12 · 9 · 9 · 10</div></div>
+    <details class="weeklist"><summary>12 מנות עיקריות</summary><div id="libDishes"></div></details>
+    <details class="weeklist"><summary>9 ארוחות בוקר</summary><div id="libB"></div></details>
+    <details class="weeklist"><summary>9 ארוחות ביניים</summary><div id="libS"></div></details>
+    <details class="weeklist"><summary>10 ארוחות ערב מהירות</summary><div id="libQ"></div></details>
+  </div>
+</section>
+
+<!-- ============ מטרות וסיכום ============ -->
+<section class="page" id="page-goals">
+  <div class="panel">
+    <div class="dv-head"><h3>מטרות השבוע</h3><div class="scale" id="goalsCount">—</div></div>
+    <div class="addgoal">
+      <input type="text" id="goalInput" placeholder="לדוגמה: לסיים את פרק 4 ולעבור על השאלות">
+      <button class="btn" id="addGoal">הוסף</button>
+    </div>
+    <div class="goals" id="goalsList"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>מטרות לטווח ארוך</h3><div class="scale" id="lgCount">—</div></div>
+    <p class="hint">אלה נשארות גם אחרי סגירת שבוע — יעדים של חודשים, לא של ימים.</p>
+    <div class="addgoal">
+      <input type="text" id="lgInput" placeholder="לדוגמה: לסיים את הקורס עד סוף השנה">
+      <button class="btn" id="addLg">הוסף</button>
+    </div>
+    <div class="goals" id="lgList"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>סיכום השבוע</h3><div class="scale">לא סופרים רק בלוקים</div></div>
+    <div class="crits" id="critsList"></div>
+    <div class="verdict" id="verdict"></div>
+    <div class="actions">
+      <button class="ghost" id="closeWeek">סגור שבוע ושמור בהיסטוריה</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>מגמה</h3><div class="scale" id="trendNote">—</div></div>
+    <svg class="chart" id="trendChart" viewBox="0 0 600 170" preserveAspectRatio="none"></svg>
+    <div class="chartlegend">
+      <div>▉ בלוקים בשבוע</div><div>● קריטריונים שסומנו</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>היסטוריה</h3><div class="scale" id="histCount">—</div></div>
+    <div class="hist" id="histList"></div>
+  </div>
+
+</section>
+
+<!-- ============ כלים ============ -->
+<section class="page" id="page-tools">
+  <div class="panel" id="acctPanel" hidden>
+    <div class="dv-head"><h3>חשבון וסנכרון</h3><div class="scale" id="syncScale">—</div></div>
+    <div class="acctrow"><span class="syncdot" id="syncDot"></span><b id="acctEmail">—</b>
+      <button class="ghost" id="signOutBtn">התנתק</button></div>
+    <p class="hint">הנתונים מסונכרנים אוטומטית לחשבון הזה. מתחברים מכל מכשיר עם אותו אימייל וסיסמה כדי לראות את אותו הלוז.</p>
+  </div>
+
+  <div class="panel backup">
+    <div class="dv-head"><h3>גיבוי</h3><div class="scale">שמור לפני שמשהו נמחק</div></div>
+    <p class="hint" id="backupHint">הנתונים שמורים רק בדפדפן הזה. ייצוא שומר הכול לקובץ, ייבוא מחזיר אותו.</p>
+    <div class="actions">
+      <button class="btn" id="expBtn">ייצא קובץ גיבוי</button>
+      <button class="btn sec" id="impBtn">ייבא קובץ</button>
+      <button class="ghost" id="showJson">הצג טקסט להעתקה</button>
+      <input type="file" id="impFile" accept="application/json" hidden>
+    </div>
+    <div id="undoWrap"></div>
+    <div id="jsonWrap" hidden><textarea id="jsonBox" readonly></textarea></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>יעד כושר שבועי</h3><div class="scale">למעקב החודשי</div></div>
+    <p class="hint">מתחילים ב־2 אימונים בשבוע. כשמרגישים מוכנים, מעלים ל־3 — השינוי חל מרגע העדכון, לא רטרואקטיבית.</p>
+    <label class="field"><span>אימוני כושר ליעד בשבוע</span>
+      <input type="number" id="fitTarget" min="1" max="14"></label>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>תבניות יום</h3><div class="scale" id="dtCount">—</div></div>
+    <div id="dayTplList"></div>
+    <div class="actions">
+      <button class="btn" id="newDayTpl">צור תבנית יום</button>
+    </div>
+    <div id="dayTplEditor"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>תבניות ערב</h3><div class="scale" id="etCount">—</div></div>
+    <div id="eveTplList"></div>
+    <div class="actions">
+      <button class="btn" id="newEveTpl">צור תבנית ערב</button>
+    </div>
+    <div id="eveTplEditor"></div>
+  </div>
+</section>
+
+<!-- ============ מעקב חודשי ============ -->
+<section class="page" id="page-month">
+  <div class="panel">
+    <div class="dv-head"><h3>מעקב חודשי</h3><div class="scale" id="monthRange">—</div></div>
+    <div class="actions" style="margin:0 0 4px">
+      <button class="ghost" id="monthPrev">‹ הקודם</button>
+      <button class="ghost" id="monthThis">החודש הזה</button>
+      <button class="ghost" id="monthNext">הבא ›</button>
+    </div>
+    <p class="hint">התמונה מלאה לשבועות שסגרת (מטרות וסיכום ← סגור שבוע) ולשבוע הנוכחי. ימים ושבועות שעוד לא הגיעו לא נספרים כפספוס.</p>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>בלוקי לימודים</h3><div class="scale" id="mStudyScale">—</div></div>
+    <div class="mbar"><i id="mStudyBar" style="width:0%"></i></div>
+    <div id="mStudyMissed"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>4 ארוחות ביום</h3><div class="scale" id="mMealScale">—</div></div>
+    <div class="mbar"><i id="mMealBar" style="width:0%"></i></div>
+    <div id="mMealMissed"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>בישול · יעד 2 בשבוע</h3><div class="scale" id="mCookScale">—</div></div>
+    <div id="mCookList"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>כושר · יעד <span id="mFitTarget">—</span> בשבוע</h3><div class="scale" id="mFitScale">—</div></div>
+    <div id="mFitList"></div>
+  </div>
+</section>
+
+<footer>הכול נשמר אוטומטית בדפדפן הזה. אפשר גם ללחוץ על "שמור שבוע" לאישור מיידי. מומלץ לייצא גיבוי מדי פעם.</footer>
+</div>
+
+<div class="savetoast" id="saveToast">השבוע נשמר ✓</div>
+<button class="savefab" id="saveNowBtn" type="button"><span class="ic">💾</span>שמור שבוע</button>
+
+<nav class="nav" id="nav">
+  <button data-tab="today" class="on"><span class="ic">☀</span>היום</button>
+  <button data-tab="plan"><span class="ic">▦</span>שבוע</button>
+  <button data-tab="course"><span class="ic">✦</span>קורס</button>
+  <button data-tab="more"><span class="ic">⋯</span>עוד</button>
+</nav>
+
+<div id="printarea"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
