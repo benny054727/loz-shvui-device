@@ -452,12 +452,34 @@
   footer{margin-top:24px;color:var(--muted);font-size:12.5px;text-align:center}
   @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 
+  /* ---------- כפתור שמירה קבוע ---------- */
+  .savefab{
+    position:fixed;left:14px;bottom:calc(var(--nav) + 14px);z-index:41;
+    display:flex;align-items:center;gap:7px;
+    background:var(--study);color:#fff;border:none;border-radius:99px;
+    padding:12px 18px;box-shadow:0 4px 14px rgba(47,163,148,.35),var(--shadow);
+    font-family:'Heebo',sans-serif;font-weight:700;font-size:14px;cursor:pointer;
+    transition:transform .12s ease,filter .16s ease;
+  }
+  .savefab:hover{filter:brightness(1.05)}
+  .savefab:active{transform:scale(.96)}
+  .savefab:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+  .savefab .ic{font-size:16px;line-height:1}
+  .savetoast{
+    position:fixed;left:14px;bottom:calc(var(--nav) + 62px);z-index:42;
+    background:var(--text);color:#fff;border-radius:12px;padding:9px 14px;
+    font-family:'Heebo',sans-serif;font-weight:700;font-size:13px;
+    box-shadow:var(--shadow);opacity:0;pointer-events:none;
+    transform:translateY(6px);transition:opacity .18s ease,transform .18s ease;
+  }
+  .savetoast.on{opacity:1;transform:none}
+
   /* ---------- הדפסה ל־PDF ---------- */
   #printarea{display:none}
   @media print{
     @page{size:A4 portrait;margin:12mm 11mm}
     html,body{background:#fff!important}
-    .wrap,.nav{display:none!important}
+    .wrap,.nav,.savefab,.savetoast{display:none!important}
     #printarea{display:block;color:#16202F;
       -webkit-print-color-adjust:exact;print-color-adjust:exact}
     #printarea section{page-break-after:always;break-after:page}
@@ -731,8 +753,11 @@
   </div>
 </section>
 
-<footer>הכול נשמר אוטומטית בדפדפן הזה. מומלץ לייצא גיבוי מדי פעם.</footer>
+<footer>הכול נשמר אוטומטית בדפדפן הזה. אפשר גם ללחוץ על "שמור שבוע" לאישור מיידי. מומלץ לייצא גיבוי מדי פעם.</footer>
 </div>
+
+<div class="savetoast" id="saveToast">השבוע נשמר ✓</div>
+<button class="savefab" id="saveNowBtn" type="button"><span class="ic">💾</span>שמור שבוע</button>
 
 <nav class="nav" id="nav">
   <button data-tab="today" class="on"><span class="ic">☀</span>היום</button>
@@ -2725,6 +2750,16 @@ document.getElementById("newDayTpl").addEventListener("click", ()=>{
 document.getElementById("newEveTpl").addEventListener("click", ()=>{
   editEve = {key:"e"+Date.now(), name:"תבנית ערב חדשה", items:[["נסיעה לדירה",30,"work"]]};
   renderEveEditor();
+});
+
+/* כפתור שמירה ידנית — שומר את כל המצב (השבוע הנוכחי, התפריט, מטרות וכו') ומראה אישור */
+let saveToastTimer = null;
+document.getElementById("saveNowBtn").addEventListener("click", ()=>{
+  save();
+  const toast = document.getElementById("saveToast");
+  toast.classList.add("on");
+  clearTimeout(saveToastTimer);
+  saveToastTimer = setTimeout(()=>toast.classList.remove("on"), 1800);
 });
 
 /* שעון חי — מרענן את דף היום */
