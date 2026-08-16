@@ -286,7 +286,9 @@ let eaten = {};            /* "תאריך:slot" -> true, אכלתי בפועל *
 let workouts = {};         /* "תאריך" -> true, עשיתי כושר */
 let cooked = {};           /* תאריך תחילת שבוע -> {sat:bool, tue:bool}, בישלתי בפועל */
 let fitnessTarget = 2;     /* יעד אימוני כושר לשבוע */
-let monthView = iso(new Date()).slice(0,8) + "01";   /* ה־1 בחודש המוצג במעקב החודשי */
+let monthAnchorDay = null; /* יום־בחודש שממנו מתחילה כל "תקופה" במעקב החודשי (נקבע פעם אחת, לפי היום הראשון שנפתח המעקב) */
+let monthView = null;      /* תאריך תחילת התקופה המוצגת כרגע במעקב החודשי */
+let selectedCalDay = null; /* היום שנבחר בלוח השנה של המעקב החודשי */
 let unassigned = [];       /* פריטים שלא נכנסו לשבוע */
 let noStudy = ["2026-09-11","2026-09-12","2026-09-13","2026-09-20","2026-09-21",
                "2026-09-25","2026-09-26","2026-10-03"];   /* חגי תשרי */
@@ -352,35 +354,49 @@ function allDays(){ return Object.assign({}, BUILTIN_DAYS, customDays); }
 function allEves(){ return Object.assign({}, BUILTIN_EVES, customEves); }
 const blocksOf = tpl => tpl.rows.filter(r=>r.block).length;
 
-/* ============ מעקב חודשי — עזרים ============ */
-const MONTH_NAMES = ["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי",
-                      "אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"];
-function monthStartOf(iso1){ return iso1.slice(0,8)+"01"; }
-function addMonths(iso1, n){
-  const p = iso1.split("-").map(Number);
-  const d = new Date(p[0], p[1]-1+n, 1);
-  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-01";
+/* ============ מעקב חודשי — עזרים ============
+   כל "תקופה" היא חודש מתגלגל שמתחיל ביום־בחודש הקבוע (monthAnchorDay) —
+   למשל אם המעקב נפתח לראשונה ב־16 בחודש, כל תקופה תהיה 16 עד 15 בחודש הבא,
+   ולא חודש קלנדרי. אם היום הקבוע גדול ממספר הימים בחודש היעד (למשל 31 בפברואר),
+   משתמשים ביום האחרון של אותו חודש. */
+function daysInCalMonth(y, m){ return new Date(y, m, 0).getDate(); }   /* m = 1..12 */
+/* תחילת התקופה n חודשים אחרי/לפני זו שמתחילה ב-startISO */
+function addPeriod(startISO, n){
+  const p = startISO.split("-").map(Number);
+  const y0 = p[0], m0 = p[1]-1+n;
+  const d = new Date(y0, m0, 1);
+  const dim = daysInCalMonth(d.getFullYear(), d.getMonth()+1);
+  const day = Math.min(monthAnchorDay, dim);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");
 }
-function daysInMonth(iso1){
-  const p = iso1.split("-").map(Number);
-  return new Date(p[0], p[1], 0).getDate();
+/* תחילת התקופה שמכילה תאריך נתון */
+function periodStartFor(dateISO){
+  const p = dateISO.split("-").map(Number);
+  let y = p[0], m = p[1];
+  if(p[2] < monthAnchorDay){ m -= 1; if(m===0){ m=12; y-=1; } }
+  const day = Math.min(monthAnchorDay, daysInCalMonth(y,m));
+  return y+"-"+String(m).padStart(2,"0")+"-"+String(day).padStart(2,"0");
 }
-function monthLabelHe(iso1){
-  const p = iso1.split("-").map(Number);
-  return MONTH_NAMES[p[1]-1]+" "+p[0];
-}
-function monthDates(iso1){
-  const n = daysInMonth(iso1), p = iso1.split("-").map(Number), out = [];
-  for(let i=1;i<=n;i++) out.push(p[0]+"-"+String(p[1]).padStart(2,"0")+"-"+String(i).padStart(2,"0"));
+function periodLabel(startISO){ return short(startISO)+"–"+short(addDays(addPeriod(startISO,1),-1)); }
+function periodDates(startISO){
+  const endExclusive = addPeriod(startISO,1);
+  const out = [];
+  let d = startISO;
+  while(d < endExclusive){ out.push(d); d = addDays(d,1); }
   return out;
 }
-function weeksInMonth(iso1){
-  const start = sundayOf(new Date(iso1+"T12:00:00"));
-  const last = addDays(iso1, daysInMonth(iso1)-1);
+function weeksInPeriod(startISO){
+  const start = sundayOf(new Date(startISO+"T12:00:00"));
+  const last = addDays(addPeriod(startISO,1), -1);
   const out = [];
   let ws = start;
   while(ws <= last){ out.push(ws); ws = addDays(ws,7); }
   return out;
+}
+/* קובע פעם אחת בלבד (ונשמר) מאיזה יום־בחודש סופרים תקופה, ומאתחל את התקופה המוצגת */
+function ensureMonthAnchor(){
+  if(monthAnchorDay == null) monthAnchorDay = new Date().getDate();
+  if(monthView == null) monthView = periodStartFor(todayISO());
 }
 /* מטרת בלוקים ליום נתון: לפי התאמה אישית, ואם אין — לפי התבנית הקבועה של יום השבוע הזה */
 function dayTargetFor(dateISO){
@@ -1551,9 +1567,11 @@ function closeWeek(){
 function renderPage2(){ renderGoals(); renderReview(); renderTrend(); renderHistory(); }
 
 /* ============ מעקב חודשי ============ */
+const DOW_LETTERS = ["א","ב","ג","ד","ה","ו","ש"];
 function renderMonth(){
-  document.getElementById("monthRange").textContent = monthLabelHe(monthView);
-  const dates = monthDates(monthView);
+  ensureMonthAnchor();
+  document.getElementById("monthRange").textContent = periodLabel(monthView);
+  const dates = periodDates(monthView);
   const today = todayISO();
 
   /* בלוקי לימודים */
@@ -1589,8 +1607,8 @@ function renderMonth(){
         `<div class="hrow miss"><b>${short(m.date)}</b><span>${m.have} מתוך ${m.need} ארוחות</span></div>`).join("")}</div>`
     : `<p class="empty">${mTarget ? "כל יום שעבר — 4 ארוחות מלאות." : "עדיין אין ימים שעברו החודש."}</p>`;
 
-  /* בישול וכושר — לפי שבועות שהסתיימו במהלך החודש */
-  const weeks = weeksInMonth(monthView);
+  /* בישול וכושר — לפי שבועות שהסתיימו במהלך התקופה */
+  const weeks = weeksInPeriod(monthView);
   const pastWeeks = weeks.filter(ws=>addDays(ws,6) <= today);
 
   let cookHit=0;
@@ -1621,6 +1639,68 @@ function renderMonth(){
         `<div class="hrow ${info.done>=info.target?"hit":"miss"}"><b>${rangeText(ws)}</b>
           <span>${info.done} מתוך ${info.target} אימונים</span></div>`).join("")}</div>`
     : `<p class="empty">סמנו "עשיתי כושר היום" בדף היום כדי לעקוב.</p>`;
+
+  renderCalendar(dates);
+}
+
+/* לוח החודש — כל יום לחיץ, מציג פירוט מלא בכל התחומים */
+function renderCalendar(dates){
+  const today = todayISO();
+  document.getElementById("calHead").innerHTML =
+    DOW_LETTERS.map(l=>`<div class="calhd">${l}</div>`).join("");
+
+  const startWd = new Date(dates[0]+"T12:00:00").getDay();
+  let cells = "";
+  for(let i=0;i<startWd;i++) cells += `<div class="calday empty"></div>`;
+  dates.forEach(d=>{
+    const si = dayStudyInfo(d), mi = dayMealsInfo(d);
+    const past = d < today;
+    const studyDot = !si.target ? "" : (si.marked===null ? "" : (si.marked>=si.target ? "on" : (past?"miss":"")));
+    const mealDot = d>today ? "" : (mi.done>=mi.target ? "on" : (past?"miss":""));
+    const fitDot = workouts[d] ? "on" : "";
+    cells += `<button type="button" class="calday ${d===today?"today":""} ${d===selectedCalDay?"sel":""}" data-calday="${d}">
+      <span class="n">${+d.split("-")[2]}</span>
+      <span class="caldots">
+        <span class="caldot ${studyDot}" title="לימודים"></span>
+        <span class="caldot ${mealDot}" title="ארוחות"></span>
+        <span class="caldot ${fitDot}" title="כושר"></span>
+      </span>
+    </button>`;
+  });
+  document.getElementById("calGrid").innerHTML = cells;
+  document.querySelectorAll("[data-calday]").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      selectedCalDay = b.dataset.calday;
+      renderCalendar(dates);
+    });
+  });
+  renderCalDetail();
+}
+
+function renderCalDetail(){
+  const box = document.getElementById("calDetail");
+  if(!selectedCalDay){ box.innerHTML = `<p class="empty">לחצו על יום בלוח כדי לראות פירוט מלא.</p>`; return; }
+  const d = selectedCalDay;
+  const wd = new Date(d+"T12:00:00").getDay();
+  const si = dayStudyInfo(d);
+  const mi = dayMealsInfo(d);
+  const fit = !!workouts[d];
+  const ws = addDays(d, -wd);
+  const ci = weekCookedInfo(ws);
+  const mealRows = MEAL_SLOTS.map(([slot,label])=>
+    `<div>${eaten[d+":"+slot] ? "✓" : "○"} ${label}</div>`).join("");
+  box.innerHTML = `
+    <div class="caldetail">
+      <div class="dv-head"><h3>${DAYS[wd]} · ${short(d)}</h3></div>
+      <div class="calrow"><b>לימודים</b><span>${
+        !si.target ? "אין יעד ליום הזה" : (si.marked===null ? "עוד לא קרה" : `${si.marked} מתוך ${si.target} בלוקים`)
+      }</span></div>
+      <div class="calrow"><b>ארוחות</b><span>${mi.done} מתוך 4</span></div>
+      <div class="calmeals">${mealRows}</div>
+      <div class="calrow"><b>כושר</b><span>${fit ? "בוצע ✓" : "לא סומן"}</span></div>
+      <div class="calrow"><b>בישול · שבוע <span style="direction:ltr;unicode-bidi:isolate">${rangeText(ws)}</span></b>
+        <span>${ci.done} מתוך ${ci.target} — ${ci.sat?"מוצ״ש ✓":"מוצ״ש ✗"} · ${ci.tue?"שלישי ✓":"שלישי ✗"}</span></div>
+    </div>`;
 }
 
 /* ============ כלים: תבניות ============ */
@@ -1927,7 +2007,8 @@ function stateObj(){
   return {v:6, weekStart, week, done, notes, review, goals, longGoals,
           history, customDays, customEves, overrides,
           course, lessons, focus, weekPlan, blockLink, errorsBank, noStudy,
-          assign, unassigned, cookPlan, menu, eaten, workouts, cooked, fitnessTarget};
+          assign, unassigned, cookPlan, menu, eaten, workouts, cooked, fitnessTarget,
+          monthAnchorDay};
 }
 /* גרסאות ישנות שמרו לפי מספר יום (0..6) — ממירים לתאריכים */
 function migrateKeys(){
@@ -1970,6 +2051,7 @@ function applyState(s){
   if(s.workouts) workouts = s.workouts;
   if(s.cooked) cooked = s.cooked;
   if(s.fitnessTarget) fitnessTarget = s.fitnessTarget;
+  if(s.monthAnchorDay) monthAnchorDay = s.monthAnchorDay;
   migrateKeys();
 }
 function exportBackup(){
@@ -2188,13 +2270,13 @@ document.getElementById("fitTarget").addEventListener("change", ()=>{
   renderAll(); save();
 });
 document.getElementById("monthPrev").addEventListener("click", ()=>{
-  monthView = addMonths(monthView, -1); renderMonth();
+  monthView = addPeriod(monthView, -1); selectedCalDay = null; renderMonth();
 });
 document.getElementById("monthNext").addEventListener("click", ()=>{
-  monthView = addMonths(monthView, 1); renderMonth();
+  monthView = addPeriod(monthView, 1); selectedCalDay = null; renderMonth();
 });
 document.getElementById("monthThis").addEventListener("click", ()=>{
-  monthView = monthStartOf(todayISO()); renderMonth();
+  monthView = periodStartFor(todayISO()); selectedCalDay = null; renderMonth();
 });
 
 /* כפתור שמירה ידנית — שומר את כל המצב (השבוע הנוכחי, התפריט, מטרות וכו') ומראה אישור */
