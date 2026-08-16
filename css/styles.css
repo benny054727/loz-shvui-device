@@ -443,12 +443,6 @@
     direction:ltr;text-align:left}
 
   /* ---------- מעקב חודשי ---------- */
-  .mbar{height:9px;background:var(--surface2);border-radius:99px;margin-top:10px;overflow:hidden}
-  .mbar i{display:block;height:100%;background:var(--study);border-radius:99px}
-  .hrow.hit{background:var(--study-bg)}
-  .hrow.miss{background:#FBF2E2;color:#6B4E14}
-  .hrow.miss b{color:#6B4E14}
-  #monthRange{direction:ltr;unicode-bidi:isolate}
   .calnav{display:flex;align-items:center;gap:7px;margin:12px 0 4px}
   .calnav select{flex:1;min-width:0;text-align:center}
   .calnav .ghost{flex:none;padding:8px 13px;font-size:15px;line-height:1}
