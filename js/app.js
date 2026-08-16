@@ -1,828 +1,3 @@
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>בונה הלוז השבועי</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;900&family=Assistant:wght@300;400;600;700&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg:#FFFFFF; --surface:#FFFFFF; --surface2:#F4F7FB; --line:#E7ECF4;
-    --text:#1C2434; --muted:#7C889E;
-    --study:#2FA394;   --study-bg:#EAF6F4;
-    --work:#C6892F;    --work-bg:#FBF2E2;
-    --prayer:#7A69CE;  --prayer-bg:#EFEDFB;
-    --meal:#4F9E63;    --meal-bg:#EAF5EC;
-    --personal:#CD6E92;--personal-bg:#FBEEF3;
-    --sleep:#5A83BE;   --sleep-bg:#ECF2FA;
-    --none:#A8B2C4;
-    --radius:18px;
-    --shadow:0 1px 2px rgba(20,32,60,.04), 0 10px 28px rgba(20,32,60,.06);
-    --nav:76px;
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;padding:0}
-  body{
-    background:
-      radial-gradient(760px 420px at 92% -12%, rgba(47,163,148,.07), transparent 62%),
-      radial-gradient(620px 400px at 4% -6%, rgba(122,105,206,.06), transparent 62%),
-      var(--bg);
-    color:var(--text); font-family:'Assistant',system-ui,sans-serif;
-    font-size:16px; line-height:1.5; min-height:100vh;
-  }
-  .wrap{max-width:980px;margin:0 auto;padding:18px 16px calc(var(--nav) + 28px)}
-
-  header{margin-bottom:14px}
-  .eyebrow{font-family:'Heebo',sans-serif;font-weight:700;font-size:11.5px;
-    letter-spacing:.18em;color:var(--study);margin-bottom:5px}
-  h1{font-family:'Heebo',sans-serif;font-weight:900;font-size:clamp(24px,6vw,36px);
-    line-height:1.05;margin:0 0 6px}
-  .sub{color:var(--muted);font-size:14.5px;max-width:52ch;margin:0}
-  h2{font-family:'Heebo',sans-serif;font-weight:700;font-size:19px;margin:0 0 4px}
-  .hint{color:var(--muted);font-size:13.5px;margin:0 0 14px}
-  .spacer{flex:1}
-  .page{display:none}
-  .page.on{display:block;animation:fade .22s ease both}
-  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-
-  /* ---------- ניווט תחתון ---------- */
-  .nav{
-    position:fixed;inset-inline:0;bottom:0;z-index:40;
-    background:rgba(255,255,255,.93);backdrop-filter:blur(10px);
-    border-top:1px solid var(--line);display:flex;
-    padding:6px 4px calc(6px + env(safe-area-inset-bottom));
-  }
-  .nav button{
-    flex:1;background:none;border:none;cursor:pointer;padding:6px 1px;min-width:0;
-    display:grid;gap:3px;justify-items:center;color:var(--muted);
-    font-family:'Heebo',sans-serif;font-weight:700;font-size:11px;
-  }
-  .nav .ic{width:22px;height:22px;display:grid;place-items:center;font-size:17px;line-height:1}
-  .nav button.on{color:var(--study)}
-  .nav button.on .ic{background:var(--study-bg);border-radius:8px}
-  .nav button:focus-visible{outline:2px solid var(--study);outline-offset:-2px}
-
-  /* ---------- רכיבים כלליים ---------- */
-  .panel,.dayview{background:var(--surface);border:1px solid var(--line);
-    border-radius:22px;padding:18px 16px;box-shadow:var(--shadow);margin-top:18px}
-  .panel .meter,.dayview .meter,.panel .focus{box-shadow:none}
-  .nav{transition:none}
-  .dv-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;
-    padding-bottom:13px;border-bottom:1px solid var(--line);margin-bottom:4px}
-  .dv-head h3{font-family:'Heebo',sans-serif;font-weight:900;font-size:22px;margin:0}
-  .scale{font-size:13px;color:var(--muted);background:var(--surface2);
-    border-radius:99px;padding:4px 12px}
-  .scale em{font-style:normal;color:var(--study);font-weight:700}
-  .btn{background:var(--study);color:#fff;border:none;border-radius:12px;
-    padding:10px 16px;font-family:'Heebo',sans-serif;font-weight:700;font-size:14px;cursor:pointer}
-  .btn.sec{background:var(--surface2);color:var(--text)}
-  .btn{transition:filter .16s ease,transform .12s ease}
-  .btn:hover{filter:brightness(1.04)}
-  .btn:active{transform:scale(.97)}
-  .btn:focus-visible{outline:2px solid var(--text);outline-offset:2px}
-  .ghost{background:transparent;border:1px solid var(--line);color:var(--muted);
-    border-radius:99px;padding:6px 13px;font-family:inherit;font-size:12.5px;cursor:pointer}
-  .ghost:hover{color:var(--text);border-color:#CBD5E5}
-  .ghost:focus-visible,.openday:focus-visible{outline:2px solid var(--study);outline-offset:2px}
-  .openday{background:transparent;border:1px dashed var(--line);color:var(--muted);
-    border-radius:12px;padding:11px;font-family:inherit;font-size:13.5px;cursor:pointer;
-    width:100%;margin-top:12px}
-  .openday:hover{color:var(--text);border-color:var(--study)}
-  input[type=date],input[type=text],input[type=time],input[type=number],select,textarea{
-    background:#fff;border:1px solid var(--line);border-radius:12px;
-    padding:9px 11px;font-family:inherit;font-size:14px;color:var(--text)}
-  select{appearance:none;cursor:pointer;width:100%}
-  input:focus-visible,select:focus-visible,textarea:focus-visible{
-    outline:2px solid var(--study);outline-offset:2px}
-  .empty{color:var(--muted);padding:18px 4px;font-size:14.5px}
-  .tick{width:22px;height:22px;border-radius:7px;flex:none;border:2px solid var(--study);
-    background:#fff;display:grid;place-items:center;margin-top:1px}
-  .row.block.done .tick,.crit.on .tick,.goal.on .tick,.lg.on .tick,.meal.eaten .tick{
-    background:var(--study);border-color:var(--study)}
-  .row.block.done .tick::after,.crit.on .tick::after,.goal.on .tick::after,.lg.on .tick::after,.meal.eaten .tick::after{
-    content:"✓";color:#fff;font-size:13px;font-weight:700;line-height:1}
-
-  /* ---------- דף היום ---------- */
-  .now-card{
-    background:linear-gradient(140deg,var(--study-bg),#F5F3FD);
-    border:1px solid var(--line);border-radius:24px;padding:20px 18px;
-    box-shadow:var(--shadow);margin-bottom:14px;
-  }
-  .now-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:12px}
-  .now-day{font-family:'Heebo',sans-serif;font-weight:900;font-size:20px}
-  .now-day i{font-style:normal;font-weight:400;font-size:13px;color:var(--muted);margin-inline-start:6px}
-  .now-clock{font-family:'Heebo',sans-serif;font-weight:900;font-size:22px;
-    direction:ltr;unicode-bidi:isolate;font-variant-numeric:tabular-nums}
-  .now-lbl{font-size:11.5px;letter-spacing:.14em;color:var(--study);
-    font-family:'Heebo',sans-serif;font-weight:700;margin-bottom:4px}
-  .now-what{font-family:'Heebo',sans-serif;font-weight:900;font-size:clamp(21px,5.5vw,28px);
-    line-height:1.25;margin:0}
-  .now-sub{color:var(--muted);font-size:13.5px;margin-top:5px}
-  .bar{height:8px;background:#fff;border-radius:99px;margin-top:14px;overflow:hidden}
-  .bar i{display:block;height:100%;background:var(--study);border-radius:99px}
-  .next{display:flex;gap:10px;align-items:baseline;margin-top:14px;
-    padding-top:12px;border-top:1px solid rgba(28,36,52,.10);font-size:14px}
-  .next b{font-family:'Heebo',sans-serif;font-weight:700}
-  .next .t{color:var(--muted);font-size:12.5px;direction:ltr;unicode-bidi:isolate}
-  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
-  .chip{
-    display:flex;align-items:center;gap:6px;background:var(--surface2);
-    border:1px solid transparent;border-radius:12px;padding:8px 11px;
-    font-family:inherit;font-size:13px;cursor:pointer;color:var(--text);
-    transition:background .16s ease,border-color .16s ease,transform .12s ease;
-  }
-  .chip:active{transform:scale(.96)}
-  .chip b{font-family:'Heebo',sans-serif;font-weight:700}
-  .chip small{color:var(--muted);font-size:11.5px;direction:ltr;unicode-bidi:isolate}
-  .chip.on{background:var(--study-bg);border-color:var(--study)}
-  .chip.on::after{content:"✓";color:var(--study);font-weight:700}
-  .chip.past:not(.on){opacity:.55}
-  .chip:focus-visible{outline:2px solid var(--study);outline-offset:2px}
-
-  .warn{background:#FBF2E2;border:1px solid #EEDCB4;border-radius:14px;
-    padding:10px 12px;font-size:13px;color:#6B4E14;margin-bottom:12px;
-    display:flex;flex-wrap:wrap;align-items:center;gap:8px}
-  .warn button{border-color:#E3CE9E;color:#6B4E14}
-
-  /* ---------- בחירת ימים ---------- */
-  .ovdays{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;margin-bottom:6px}
-  .ovpick{flex:0 0 auto;background:var(--surface2);border:1px solid transparent;color:var(--muted);
-    border-radius:14px;padding:8px 12px;font-family:inherit;font-size:13px;cursor:pointer;
-    line-height:1.25;text-align:center;min-width:64px}
-  .ovpick b{display:block;font-family:'Heebo',sans-serif;font-weight:700;font-size:14px;color:inherit}
-  .ovpick small{font-size:11px;opacity:.9;direction:ltr;unicode-bidi:isolate}
-  .ovpick.on{background:var(--study);border-color:var(--study);color:#fff}
-  .ovpick.today:not(.on){border-color:var(--study);color:var(--text)}
-  .ovpick:focus-visible{outline:2px solid var(--study);outline-offset:2px}
-
-  /* ---------- דף לוז ---------- */
-  .datebar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;
-    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
-    padding:12px 14px;box-shadow:var(--shadow);margin-bottom:14px}
-  .datebar label{font-size:13px;color:var(--muted)}
-  .datebar .range{font-family:'Heebo',sans-serif;font-weight:900;font-size:18px;
-    direction:ltr;unicode-bidi:isolate}
-  .weekbar{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 20px}
-  .stat{flex:1 1 150px;background:var(--surface);border:1px solid var(--line);
-    border-radius:var(--radius);padding:13px 15px;box-shadow:var(--shadow)}
-  .stat b{display:block;font-family:'Heebo',sans-serif;font-weight:900;font-size:25px;
-    line-height:1.1;font-variant-numeric:tabular-nums}
-  .stat span{color:var(--muted);font-size:12.5px}
-  .stat span i{font-style:normal;white-space:nowrap}
-  .stat.target b{color:var(--study)}
-  .stat.max b{color:var(--work)}
-  .daycard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
-    padding:15px;display:grid;gap:10px;box-shadow:var(--shadow)}
-  .daycard.active{border-color:var(--study);box-shadow:0 0 0 3px var(--study-bg),var(--shadow)}
-  .daycard.rest{background:var(--surface2);box-shadow:none}
-  .daycard-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-  .dayname{font-family:'Heebo',sans-serif;font-weight:900;font-size:19px}
-  .dayname i{font-style:normal;font-weight:400;font-size:13px;color:var(--muted);
-    margin-inline-start:6px;direction:ltr;unicode-bidi:isolate}
-  .daymeta{font-size:13px;color:var(--muted)}
-  .daymeta em{font-style:normal;color:var(--study);font-weight:700}
-  .selects{display:grid;gap:8px;grid-template-columns:1fr 1fr}
-  label.field span{display:block;font-size:11.5px;color:var(--muted);
-    letter-spacing:.06em;margin-bottom:4px}
-
-  .ribbon{position:relative;padding:14px 22px 4px 0;margin:0}
-  .ribbon::before{content:"";position:absolute;top:0;bottom:14px;right:6px;width:2px;
-    background:linear-gradient(to bottom,var(--line),rgba(231,236,244,.15))}
-  .row{position:relative;display:flex;gap:12px;align-items:flex-start;padding:5px 18px 5px 0}
-  .row::before{content:"";position:absolute;right:1px;top:14px;width:12px;height:12px;
-    border-radius:50%;background:var(--bg);border:2px solid var(--tone,var(--none))}
-  .row.block{padding:7px 18px 7px 0}
-  .row.block::before{background:var(--tone)}
-  .row.now .what{box-shadow:0 0 0 2px var(--study)}
-  .row.now::before{background:var(--study);box-shadow:0 0 0 4px var(--study-bg)}
-  .time{font-family:'Heebo',sans-serif;font-weight:700;font-size:12.5px;color:var(--muted);
-    min-width:88px;padding-top:3px;font-variant-numeric:tabular-nums}
-  .time.num{direction:ltr;text-align:right;unicode-bidi:isolate}
-  .what{flex:1;font-size:15px;padding-top:1px}
-  .row.block .what{background:var(--surface2);border-right:3px solid var(--tone);
-    border-radius:0 10px 10px 0;padding:8px 11px;font-weight:600;
-    display:flex;gap:10px;align-items:flex-start;cursor:pointer;user-select:none}
-  .row.block.done .what{background:var(--study-bg)}
-  .row.block.done::before{box-shadow:0 0 0 4px var(--study-bg)}
-  .row.dim .what{color:var(--muted)}
-  .blk{flex:1;min-width:0}
-  .blk-note{display:block;width:100%;margin-top:3px;background:transparent;border:none;
-    border-bottom:1px dashed #C9D3E2;color:var(--text);font-family:inherit;
-    font-size:12.5px;padding:2px 0;border-radius:0}
-  .blk-note::placeholder{color:var(--muted)}
-  .blk-note:focus{outline:none;border-bottom-color:var(--study)}
-  .meter{background:var(--surface2);border-radius:16px;padding:14px 16px;
-    margin:16px 0 6px;display:grid;gap:12px}
-  .meter-top{display:flex;align-items:center;gap:12px}
-  .meter-count{font-family:'Heebo',sans-serif;font-weight:900;font-size:34px;
-    line-height:1;color:var(--study);min-width:44px}
-  .meter-word{font-weight:700;font-size:16px;line-height:1.2}
-  .meter-sub{color:var(--muted);font-size:12.5px;margin-top:2px}
-  .pips{display:flex;gap:5px;margin-top:16px}
-  .pip{flex:1 1 0;height:9px;border-radius:99px;background:#E1E8F1;position:relative}
-  .pip.on{background:var(--study)}
-  .pip.goal::after{content:"יעד";position:absolute;top:-17px;right:50%;
-    transform:translateX(50%);font-size:10px;color:var(--muted)}
-  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px;padding-top:13px;
-    border-top:1px solid var(--line)}
-  .legend div{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}
-  .dot{width:9px;height:9px;border-radius:50%}
-  .weeklist{margin-top:18px;background:var(--surface);border:1px solid var(--line);
-    border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
-  .weeklist summary{cursor:pointer;padding:14px 16px;font-family:'Heebo',sans-serif;
-    font-weight:700;font-size:15px;list-style:none}
-  .weeklist summary::-webkit-details-marker{display:none}
-  .weeklist summary::after{content:"▾";float:left;color:var(--muted)}
-  .weeklist[open] summary{border-bottom:1px solid var(--line)}
-  .weeklist[open] summary::after{content:"▴"}
-  .wrow{display:flex;align-items:baseline;gap:10px;width:100%;text-align:right;
-    background:none;border:none;border-bottom:1px solid var(--line);
-    padding:11px 16px;font-family:inherit;font-size:13.5px;color:var(--text);cursor:pointer}
-  .wrow:last-child{border-bottom:none}
-  .wrow.on{background:var(--study-bg)}
-  .wrow b{font-family:'Heebo',sans-serif;font-weight:700;font-size:14px;min-width:42px}
-  .wrow i{font-style:normal;color:var(--muted);font-size:12px;min-width:34px;
-    direction:ltr;unicode-bidi:isolate}
-  .wrow span{color:var(--muted);flex:1}
-  .wrow em{font-style:normal;color:var(--study);font-weight:700;white-space:nowrap}
-
-  .modes{display:flex;gap:6px;background:var(--surface2);padding:5px;
-    border-radius:99px;margin-bottom:14px}
-  .modes button{flex:1;border:none;background:transparent;color:var(--muted);
-    font-family:'Heebo',sans-serif;font-weight:700;font-size:14px;
-    padding:9px 8px;border-radius:99px;cursor:pointer;transition:background .18s ease}
-  .modes button.on{background:#fff;color:var(--text);box-shadow:var(--shadow)}
-  .modes button:focus-visible{outline:2px solid var(--study);outline-offset:2px}
-  #ovGrid{display:grid;gap:12px}
-  @media(min-width:720px){#ovGrid{grid-template-columns:1fr 1fr}}
-
-  /* ---------- מבט שבועי ---------- */
-  .ovhead{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:12px}
-  .ovhead .range{font-family:'Heebo',sans-serif;font-weight:900;font-size:20px;
-    direction:ltr;unicode-bidi:isolate}
-  .ovcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
-    padding:15px 16px;box-shadow:var(--shadow)}
-  .ovcard.rest{background:var(--surface2);box-shadow:none}
-  .ovcard.today{border-color:var(--study);box-shadow:0 0 0 3px var(--study-bg),var(--shadow)}
-  .ovtop{display:flex;align-items:baseline;justify-content:space-between;gap:8px;
-    padding-bottom:8px;border-bottom:1.5px solid var(--text);margin-bottom:6px}
-  .ovday{font-family:'Heebo',sans-serif;font-weight:900;font-size:18px}
-  .ovday i{font-style:normal;font-weight:400;font-size:13px;color:var(--muted);margin-inline-start:6px}
-  .ovchip{font-size:11.5px;font-weight:700;color:#1F6F65;background:var(--study-bg);
-    border-radius:99px;padding:3px 9px;white-space:nowrap}
-  .ovtpl{font-size:12px;color:var(--muted);margin-bottom:8px}
-  .ovpart{font-size:10.5px;letter-spacing:.08em;color:var(--muted);margin:8px 0 3px;
-    font-family:'Heebo',sans-serif;font-weight:700}
-  .ovrow{display:flex;gap:9px;font-size:13px;padding:2.5px 0}
-  .ovrow .t{min-width:76px;color:var(--muted);font-variant-numeric:tabular-nums;flex:none}
-  .ovrow .t.num{direction:ltr;text-align:right;unicode-bidi:isolate}
-  .ovrow .x{flex:1;border-right:3px solid var(--c,var(--none));padding-right:8px}
-  .ovrow.study .x{background:var(--surface2);border-radius:0 8px 8px 0;padding:3px 8px;font-weight:600}
-  .ovrow.study.done .x{background:var(--study-bg)}
-  .ovrow.study.done .x::after{content:" ✓";color:var(--study);font-weight:700}
-  .ovrow .x small{display:block;font-weight:400;font-size:11.5px;color:var(--muted)}
-
-  /* ---------- מטרות, סיכום, גרף ---------- */
-  .addgoal{display:flex;gap:8px;margin:12px 0}
-  .addgoal input{flex:1}
-  .goals,.crits{display:grid;gap:8px;margin:10px 0 14px}
-  .goal,.crit,.lg{display:flex;align-items:flex-start;gap:11px;width:100%;text-align:right;
-    background:var(--surface2);border:1px solid transparent;border-radius:14px;
-    padding:11px 13px;font-family:inherit;font-size:15px;color:var(--text);cursor:pointer;
-    transition:background .16s ease,border-color .16s ease}
-  .goal small,.crit small,.lg small{display:block;color:var(--muted);font-size:12.5px;font-weight:400}
-  .crit b{font-weight:700}
-  .goal .tick,.crit .tick,.lg .tick{border-color:var(--muted)}
-  .goal.on,.crit.on,.lg.on{background:var(--study-bg);border-color:var(--study)}
-  .goal.on .txt,.lg.on .txt{color:var(--muted)}
-  .goal .txt,.lg .txt{flex:1}
-  .goal .del,.lg .del,.hrow .del{background:none;border:none;color:var(--muted);
-    font-size:18px;cursor:pointer;line-height:1;padding:0 4px}
-  .verdict{border-top:1px solid var(--line);padding-top:13px;display:flex;
-    align-items:baseline;gap:10px;flex-wrap:wrap}
-  .verdict b{font-family:'Heebo',sans-serif;font-weight:900;font-size:19px}
-  .verdict span{color:var(--muted);font-size:13.5px}
-  .hist{display:grid;gap:8px;margin-top:10px}
-  .hrow{display:flex;align-items:center;gap:10px;background:var(--surface2);
-    border-radius:14px;padding:11px 13px;font-size:14px}
-  .hrow b{font-family:'Heebo',sans-serif;font-weight:900;font-size:14.5px;min-width:96px;
-    direction:ltr;unicode-bidi:isolate;text-align:right}
-  .hrow small{color:var(--muted);font-size:12.5px}
-  .hrow .del{margin-inline-start:auto}
-  .hitem{display:grid;gap:6px}
-  .hdet{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 13px}
-  .hday{padding:6px 0;border-bottom:1px dotted var(--line);font-size:13px}
-  .hday:last-child{border-bottom:none}
-  .hday b{font-family:'Heebo',sans-serif;font-weight:700;margin-inline-end:8px}
-  .hday span{color:var(--muted);font-size:12.5px}
-  .hday ul{margin:5px 0 0;padding-inline-start:18px;color:var(--muted);font-size:12.5px}
-  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
-  .chart{width:100%;height:170px;margin-top:6px}
-  .chart .lbl{font-size:9px;fill:#7C889E;font-family:'Assistant',sans-serif}
-  .chart .val{font-size:10px;fill:#1C2434;font-family:'Heebo',sans-serif;font-weight:700}
-  .chartlegend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:4px}
-  .quote{display:flex;align-items:center;gap:10px;margin-top:16px;padding:12px 15px;
-    background:var(--surface2);border-radius:16px}
-  .quote .qtext{font-family:'Heebo',sans-serif;font-weight:700;font-size:14.5px;
-    line-height:1.35;margin:0;flex:1}
-  .quote .qmeta{color:var(--muted);font-size:11.5px;white-space:nowrap}
-  .quote .qnext{background:none;border:none;color:var(--muted);font-size:17px;
-    cursor:pointer;padding:2px 4px;line-height:1}
-  .quote .qnext:hover{color:var(--study)}
-  .focuswrap{background:var(--surface2);border-radius:14px;margin-top:12px;overflow:hidden}
-  .focuswrap summary{cursor:pointer;padding:11px 13px;font-size:13.5px;
-    font-family:'Heebo',sans-serif;font-weight:700;list-style:none}
-  .focuswrap summary::-webkit-details-marker{display:none}
-  .focuswrap summary::after{content:"▾";float:left;color:var(--muted)}
-  .focuswrap[open] summary::after{content:"▴"}
-  .focuswrap .focus{border-radius:0;background:transparent;padding-top:0}
-  .bigbtn{width:100%;margin-top:16px;background:var(--study);color:#fff;border:none;
-    border-radius:16px;padding:15px;font-family:'Heebo',sans-serif;font-weight:900;
-    font-size:17px;cursor:pointer;transition:transform .12s ease,filter .18s ease}
-  .bigbtn:active{transform:scale(.985)}
-  .bigbtn.undo{background:#fff;color:var(--study);box-shadow:inset 0 0 0 2px var(--study)}
-  .bigbtn:focus-visible{outline:2px solid var(--text);outline-offset:2px}
-
-  /* ---------- קורס ---------- */
-  .goalcard{background:linear-gradient(140deg,var(--study-bg),#F5F3FD);
-    border:1px solid var(--line);border-radius:24px;padding:20px 18px;
-    box-shadow:var(--shadow);margin-bottom:14px}
-  .goalcard .gtop{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
-  .goalcard .gbig{font-family:'Heebo',sans-serif;font-weight:900;
-    font-size:clamp(20px,5vw,26px);line-height:1.2}
-  .goalcard .gsub{color:var(--muted);font-size:13px;margin-top:3px}
-  .goalcard .pace{font-family:'Heebo',sans-serif;font-weight:700;font-size:13px;
-    background:#fff;border-radius:99px;padding:5px 12px;white-space:nowrap}
-  .goalcard .pace.late{background:#FBF2E2;color:#6B4E14}
-  .goalcard .pace.ok{color:#1F6F65}
-  .gbar{height:10px;background:#fff;border-radius:99px;margin-top:14px;overflow:hidden}
-  .gbar i{display:block;height:100%;background:var(--study);border-radius:99px}
-  .ckpt{margin-top:12px;padding-top:11px;border-top:1px solid rgba(28,36,52,.10);
-    font-size:13px;color:var(--muted)}
-
-  .focus{display:grid;gap:10px;background:var(--surface2);border-radius:16px;padding:13px 14px}
-  .focus .frow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .focus .flbl{font-size:11.5px;letter-spacing:.12em;color:var(--muted);
-    font-family:'Heebo',sans-serif;font-weight:700}
-  .stages{display:flex;gap:6px;flex-wrap:wrap}
-  .stg{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px;
-    font-family:inherit;font-size:13px;cursor:pointer;color:var(--muted)}
-  .stg.on{background:var(--study);border-color:var(--study);color:#fff;font-weight:700}
-  .stg.fin{border-color:var(--study);color:var(--study)}
-  .counter{display:flex;align-items:center;gap:8px}
-  .counter button{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);
-    background:#fff;font-size:17px;cursor:pointer;line-height:1}
-  .counter b{font-family:'Heebo',sans-serif;font-weight:900;font-size:17px;min-width:76px;
-    text-align:center;font-variant-numeric:tabular-nums}
-
-  .lsn{display:flex;align-items:center;gap:10px;background:var(--surface2);
-    border-radius:14px;padding:10px 13px;margin-bottom:7px;font-size:14px}
-  .lsn.done{background:var(--study-bg)}
-  .lsn.active{outline:2px solid var(--study)}
-  .lsn b{font-family:'Heebo',sans-serif;font-weight:900;min-width:64px}
-  .lsn .bars{flex:1;display:flex;gap:4px}
-  .lsn .sb{flex:1;height:7px;border-radius:99px;background:#E1E8F1;overflow:hidden}
-  .lsn .sb i{display:block;height:100%;background:var(--study)}
-  .lsn small{color:var(--muted);font-size:12px;white-space:nowrap}
-  .lsn .go{background:none;border:none;color:var(--study);font-size:13px;
-    font-family:'Heebo',sans-serif;font-weight:700;cursor:pointer}
-  .loadbox{background:var(--surface2);border-radius:14px;padding:12px 14px;font-size:13.5px}
-  .loadbox b{font-family:'Heebo',sans-serif;font-weight:700}
-  .loadbox.over{background:#FBF2E2;color:#6B4E14}
-  .wk{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
-  .wkchip{background:#fff;border:1px solid var(--line);border-radius:12px;padding:7px 11px;
-    font-size:13px;cursor:pointer;display:flex;gap:7px;align-items:center}
-  .wkchip.on{background:var(--study-bg);border-color:var(--study);font-weight:700}
-  .errrow{display:flex;gap:10px;align-items:flex-start;background:var(--surface2);
-    border-radius:14px;padding:10px 13px;margin-bottom:7px;font-size:14px}
-  .errrow.on{background:var(--study-bg);opacity:.75}
-  .errrow .txt{flex:1}
-  .errrow small{color:var(--muted);font-size:12px}
-
-  /* ---------- אוכל ---------- */
-  .mday{background:var(--surface2);border-radius:16px;padding:12px 14px;margin-bottom:9px}
-  .mday-top{display:flex;justify-content:space-between;align-items:baseline;
-    margin-bottom:8px;padding-bottom:7px;border-bottom:1px solid var(--line)}
-  .mday-top b{font-family:'Heebo',sans-serif;font-weight:900;font-size:15px}
-  .mday-top i{font-style:normal;color:var(--muted);font-size:12px;
-    direction:ltr;unicode-bidi:isolate}
-  .mrow{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-  .mrow .mt{min-width:70px;font-size:11.5px;color:var(--muted);
-    font-family:'Heebo',sans-serif;font-weight:700}
-  .mrow select{flex:1;font-size:13px;padding:7px 9px;background:#fff}
-  .meals{display:grid;gap:7px;margin-top:10px}
-  .meal{display:flex;align-items:baseline;gap:9px;background:var(--surface2);
-    border-radius:12px;padding:9px 12px;font-size:14px}
-  .meal b{font-family:'Heebo',sans-serif;font-weight:700;min-width:52px;
-    direction:ltr;unicode-bidi:isolate;color:var(--muted);font-size:12.5px}
-  .meal span{flex:1}
-  .meal.empty span{color:var(--muted)}
-  .meal.now{background:var(--study-bg);outline:1px solid var(--study)}
-  .libitem{display:flex;gap:10px;align-items:baseline;padding:9px 14px;
-    border-bottom:1px solid var(--line);font-size:13.5px}
-  .libitem:last-child{border-bottom:none}
-  .libitem b{font-family:'Heebo',sans-serif;font-weight:700;flex:1}
-  .libitem small{color:var(--muted);font-size:12px}
-  .meal .tick{cursor:pointer;flex:none;width:20px;height:20px;margin-top:0}
-  .meal.eaten{background:var(--study-bg)}
-  .cookdone{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
-
-  /* ---------- כלים ותבניות ---------- */
-  .tpl{display:flex;align-items:center;gap:10px;background:var(--surface2);
-    border-radius:14px;padding:10px 13px;font-size:14px;margin-bottom:7px}
-  .tpl b{font-family:'Heebo',sans-serif;font-weight:700;flex:1}
-  .tpl small{color:var(--muted);font-size:12px}
-  .tag{font-size:10.5px;font-weight:700;border-radius:99px;padding:2px 8px;
-    background:#fff;color:var(--muted);border:1px solid var(--line)}
-  .tag.mine{background:var(--study-bg);color:#1F6F65;border-color:transparent}
-  .ed{display:grid;gap:9px;margin-top:12px}
-  .edrow{display:flex;gap:6px;align-items:center}
-  .edrow input.t1{width:88px;flex:none}
-  .edrow input.mins{width:74px;flex:none}
-  input.tm{direction:ltr;text-align:center;font-variant-numeric:tabular-nums;
-    letter-spacing:.02em}
-  input.mins{direction:ltr;text-align:center}
-  .edhead input.ends{width:100%}
-  .edrow input.txt{flex:1;min-width:0}
-  .edrow select.tone{width:104px;flex:none}
-  .edrow .x{background:none;border:none;color:var(--muted);font-size:17px;cursor:pointer;padding:0 3px}
-  .edhead{display:grid;gap:8px;grid-template-columns:1fr 110px}
-  .backup textarea{width:100%;min-height:90px;font-size:11.5px;font-family:ui-monospace,monospace;
-    direction:ltr;text-align:left}
-
-  /* ---------- מעקב חודשי ---------- */
-  .mbar{height:9px;background:var(--surface2);border-radius:99px;margin-top:10px;overflow:hidden}
-  .mbar i{display:block;height:100%;background:var(--study);border-radius:99px}
-  .hrow.hit{background:var(--study-bg)}
-  .hrow.miss{background:#FBF2E2;color:#6B4E14}
-  .hrow.miss b{color:#6B4E14}
-
-  footer{margin-top:24px;color:var(--muted);font-size:12.5px;text-align:center}
-  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
-
-  /* ---------- כפתור שמירה קבוע ---------- */
-  .savefab{
-    position:fixed;left:14px;bottom:calc(var(--nav) + 14px);z-index:41;
-    display:flex;align-items:center;gap:7px;
-    background:var(--study);color:#fff;border:none;border-radius:99px;
-    padding:12px 18px;box-shadow:0 4px 14px rgba(47,163,148,.35),var(--shadow);
-    font-family:'Heebo',sans-serif;font-weight:700;font-size:14px;cursor:pointer;
-    transition:transform .12s ease,filter .16s ease;
-  }
-  .savefab:hover{filter:brightness(1.05)}
-  .savefab:active{transform:scale(.96)}
-  .savefab:focus-visible{outline:2px solid var(--text);outline-offset:2px}
-  .savefab .ic{font-size:16px;line-height:1}
-  .savetoast{
-    position:fixed;left:14px;bottom:calc(var(--nav) + 62px);z-index:42;
-    background:var(--text);color:#fff;border-radius:12px;padding:9px 14px;
-    font-family:'Heebo',sans-serif;font-weight:700;font-size:13px;
-    box-shadow:var(--shadow);opacity:0;pointer-events:none;
-    transform:translateY(6px);transition:opacity .18s ease,transform .18s ease;
-  }
-  .savetoast.on{opacity:1;transform:none}
-
-  /* ---------- הדפסה ל־PDF ---------- */
-  #printarea{display:none}
-  @media print{
-    @page{size:A4 portrait;margin:12mm 11mm}
-    html,body{background:#fff!important}
-    .wrap,.nav,.savefab,.savetoast{display:none!important}
-    #printarea{display:block;color:#16202F;
-      -webkit-print-color-adjust:exact;print-color-adjust:exact}
-    #printarea section{page-break-after:always;break-after:page}
-    #printarea section:last-child{page-break-after:auto;break-after:auto}
-    .pcover{padding-top:26mm;text-align:center}
-    .pcover h1{font-family:'Heebo',sans-serif;font-weight:900;font-size:32pt;margin:0}
-    .pcover .prange{font-size:15pt;margin:3mm 0 12mm;color:#2FA394;font-weight:700;
-      direction:ltr;unicode-bidi:isolate}
-    .pcover .pstats{display:flex;justify-content:center;gap:6mm;margin-bottom:12mm}
-    .pcover .pstat{border:.6pt solid #C9D4E3;border-radius:4mm;padding:4mm 7mm;min-width:34mm}
-    .pcover .pstat b{display:block;font-family:'Heebo',sans-serif;font-size:20pt;line-height:1}
-    .pcover .pstat span{font-size:9pt;color:#5C6A80}
-    .pcover .pg{text-align:right;max-width:120mm;margin:0 auto;border-top:1pt solid #16202F;padding-top:4mm}
-    .pcover .pg h2{font-family:'Heebo',sans-serif;font-size:13pt;margin:0 0 3mm}
-    .pcover .pg div{font-size:11pt;padding:1.6mm 0;border-bottom:.4pt dotted #C9D4E3}
-    .pcover .note{margin-top:14mm;font-size:9.5pt;color:#5C6A80}
-    .pday .ph{display:flex;align-items:flex-end;justify-content:space-between;
-      border-bottom:2pt solid #16202F;padding-bottom:2mm;margin-bottom:2mm}
-    .pday .ph h2{font-family:'Heebo',sans-serif;font-weight:900;font-size:17pt;margin:0}
-    .pday .ph h2 span{font-size:12pt;font-weight:400;color:#5C6A80;margin-inline-start:3mm}
-    .pday .chip{font-family:'Heebo',sans-serif;font-weight:700;font-size:10pt;
-      background:#EAF6F4;color:#1F6F65;border-radius:99px;padding:1.6mm 4mm;white-space:nowrap}
-    .pday .ptpl{font-size:9pt;color:#5C6A80;margin-bottom:2mm}
-    .pday h3{font-family:'Heebo',sans-serif;font-size:9.5pt;letter-spacing:.06em;
-      color:#5C6A80;margin:0 0 1mm;padding-top:1.5mm}
-    .pday table{width:100%;border-collapse:collapse;font-size:9pt;line-height:1.2;margin-bottom:1mm}
-    .pday td{padding:.72mm 0;vertical-align:top;border-bottom:.35pt solid #E7ECF4}
-    .pday td.pt{width:25mm;color:#5C6A80;white-space:nowrap;font-variant-numeric:tabular-nums}
-    .pday td.pt.num{direction:ltr;text-align:right;unicode-bidi:isolate}
-    .pday td.pd{padding-right:3mm;border-right:2.4pt solid var(--c,#A8B2C4)}
-    .pday tr.study td.pd{background:#EAF6F4;font-weight:700}
-    .pday tr.study td.pd i{display:block;font-style:normal;font-weight:400;font-size:8.5pt;color:#5C6A80}
-    .pday .pfoot{margin-top:2.5mm;padding-top:1.5mm;border-top:.5pt solid #C9D4E3;
-      font-size:8.5pt;color:#5C6A80;display:flex;justify-content:space-between}
-    .pday .pfoot .pr{direction:ltr;unicode-bidi:isolate}
-  }
-</style>
-</head>
-<body>
-<div class="wrap">
-
-<header>
-  <div class="eyebrow" id="hdrEyebrow">גרסה למכשיר שלך · 9 · מערכת האוכל</div>
-  <h1 id="hdrTitle">בונה הלוז השבועי</h1>
-  <p class="sub" id="hdrSub">היום שלי, בניית השבוע, מבט מלא, מטרות וכלים.</p>
-</header>
-
-<!-- ============ היום שלי ============ -->
-<section class="page on" id="page-today">
-  <div class="now-card" id="nowCard"></div>
-  <div class="panel" id="todayBlocks"></div>
-  <div class="panel" id="todayMeals"></div>
-  <div class="panel" id="todayHabits"></div>
-  <div class="panel" id="todayGoals"></div>
-  <div class="quote" id="quoteBox"></div>
-</section>
-
-<!-- ============ לוז שבועי ============ -->
-<section class="page" id="page-plan">
-  <div class="datebar">
-    <label for="wstart">שבוע שמתחיל ביום ראשון</label>
-    <input type="date" id="wstart">
-    <div class="range" id="rangeTxt">—</div>
-    <div class="spacer"></div>
-    <button class="btn" id="pdfBtn">הפק PDF</button>
-  </div>
-
-  <div class="modes" id="planModes">
-    <button data-mode="day" class="on">יום</button>
-    <button data-mode="week">כל השבוע</button>
-  </div>
-
-  <div class="weekbar">
-    <div class="stat target"><b id="wTarget">—</b><span>יעד בלוקים לשבוע</span></div>
-    <div class="stat max"><b id="wMax">—</b><span>פוטנציאל אם הכול שקט</span></div>
-    <div class="stat"><b id="wHours">—</b><span>לימוד נטו ביעד · <i id="hoursCalc"></i></span></div>
-    <div class="stat"><b id="wDone">—</b><span>בלוקים שסימנת השבוע</span></div>
-  </div>
-
-  <div id="planBanner"></div>
-  <div id="planDayWrap">
-    <div class="ovdays" id="planDays"></div>
-    <div id="dayEditor"></div>
-    <div class="dayview" id="dayview"></div>
-    <div id="ovEditor"></div>
-    <details class="weeklist">
-      <summary>סקירת כל השבוע בשורות</summary>
-      <div id="weekRows"></div>
-    </details>
-  </div>
-
-  <div id="planWeekWrap" hidden>
-    <div class="ovhead">
-      <div class="scale" id="ovSummary">—</div>
-    </div>
-    <div id="ovGrid"></div>
-  </div>
-</section>
-
-<!-- ============ קורס ============ -->
-<section class="page" id="page-course">
-  <div class="goalcard" id="courseGoal"></div>
-
-  <div class="panel">
-    <div class="dv-head"><h3>על מה אני עובד עכשיו</h3>
-      <div class="scale" id="focusNote">—</div></div>
-    <div id="focusBox"></div>
-  </div>
-
-  <div class="panel">
-    <div class="dv-head"><h3>שיעורי השבוע</h3>
-      <div class="scale" id="wkRange">—</div></div>
-    <div class="wk" id="wkChips"></div>
-    <div class="loadbox" id="loadBox">—</div>
-    <div class="actions">
-      <button class="btn" id="allocBtn">שבץ לשבוע</button>
-      <button class="ghost" id="allocClear">נקה שיבוץ</button>
-    </div>
-    <div id="allocPreview"></div>
-  </div>
-
-  <div class="panel">
-    <div class="dv-head"><h3>כל השיעורים</h3>
-      <div class="scale" id="lsnNote">—</div></div>
-    <div id="lsnList"></div>
-  </div>
-
-  <div class="panel">
-    <div class="dv-head"><h3>בנק טעויות</h3>
-      <div class="scale" id="errNote">—</div></div>
-    <p class="hint">שאלות שטעית בהן. אלה חומר החזרה של תחילת יום הלימודים הבא.</p>
-    <div class="addgoal">
-      <input type="text" id="errInput" placeholder="לדוגמה: חישוב תשואה ריאלית מול נומינלית">
-      <button class="btn" id="addErr">הוסף</button>
-    </div>
-    <div id="errList"></div>
-  </div>
-
-  <div class="panel">
-    <div class="dv-head"><h3>הגדרות הקורס</h3></div>
-    <div class="ed">
-      <div class="edhead">
-        <input type="text" id="cName" placeholder="שם הקורס">
-        <input type="number" id="cTotal" min="1" max="99" placeholder="שיעורים">
-      </div>
-      <label class="field"><span>תאריך יעד לסיום</span><input type="date" id="cDeadline"></label>
-      <label class="field"><span>עמודים בבלוק אחד (קריאה + השמעה)</span>
-        <input type="number" id="cPpb" min="1" max="60"></label>
-      <label class="field"><span>דקות ל־15 השאלות</span>
-        <input type="number" id="cQmin" min="0" max="300"></label>
-      <div class="actions"><button class="btn" id="saveCourse">שמור הגדרות</button></div>
-    </div>
-  </div>
-</section>
-
-<section class="page" id="page-more">
-  <div class="modes" id="subNav">
-    <button data-sub="goals" class="on">מטרות וסיכום</button>
-    <button data-sub="food">אוכל</button>
-    <button data-sub="month">מעקב חודשי</button>
-    <button data-sub="tools">כלים ותבניות</button>
-  </div>
-</section>
-
-<section class="page" id="page-food">
-  <div class="panel">
-    <div class="dv-head"><h3>מה מבשלים השבוע</h3>
-      <div class="scale" id="cookRange">—</div></div>
-    <div class="selects">
-      <label class="field"><span>מוצ״ש — לראשון עד שלישי</span>
-        <select id="cookSat"></select></label>
-      <label class="field"><span>שלישי — לרביעי עד שישי</span>
-        <select id="cookTue"></select></label>
-    </div>
-    <div id="cookInfo"></div>
-    <div class="cookdone" id="cookDone"></div>
-  </div>
-
-  <div class="panel">
-    <div class="dv-head"><h3>תפריט השבוע</h3>
-      <div class="scale" id="menuNote">—</div></div>
-    <div class="actions" style="margin:0 0 12px">
-      <button class="ghost" id="menuFill">מלא לפי ברירת מחדל</button>
-      <button class="ghost" id="menuClear">נקה תפריט</button>
-    </div>
-    <div id="menuGrid"></div>
-  </div>
-
-  <div class="panel">
-    <div class="dv-head"><h3>המאגרים</h3><div class="scale">12 · 9 · 9 · 10</div></div>
-    <details class="weeklist"><summary>12 מנות עיקריות</summary><div id="libDishes"></div></details>
-    <details class="weeklist"><summary>9 ארוחות בוקר</summary><div id="libB"></div></details>
-    <details class="weeklist"><summary>9 ארוחות ביניים</summary><div id="libS"></div></details>
-    <details class="weeklist"><summary>10 ארוחות ערב מהירות</summary><div id="libQ"></div></details>
-  </div>
-</section>
-
-<!-- ============ מטרות וסיכום ============ -->
-<section class="page" id="page-goals">
-  <div class="panel">
-    <div class="dv-head"><h3>מטרות השבוע</h3><div class="scale" id="goalsCount">—</div></div>
-    <div class="addgoal">
-      <input type="text" id="goalInput" placeholder="לדוגמה: לסיים את פרק 4 ולעבור על השאלות">
-      <button class="btn" id="addGoal">הוסף</button>
-    </div>
-    <div class="goals" id="goalsList"></div>
-  </div>
-
-  <div class="panel">
-    <div class="dv-head"><h3>מטרות לטווח ארוך</h3><div class="scale" id="lgCount">—</div></div>
-    <p class="hint">אלה נשארות גם אחרי סגירת שבוע — יעדים של חודשים, לא של ימים.</p>
-    <div class="addgoal">
-      <input type="text" id="lgInput" placeholder="לדוגמה: לסיים את הקורס עד סוף השנה">
-      <button class="btn" id="addLg">הוסף</button>
-    </div>
-    <div class="goals" id="lgList"></div>
-  </div>
-
-  <div class="panel">
-    <div class="dv-head"><h3>סיכום השבוע</h3><div class="scale">לא סופרים רק בלוקים</div></div>
-    <div class="crits" id="critsList"></div>
-    <div class="verdict" id="verdict"></div>
-    <div class="actions">
-      <button class="ghost" id="closeWeek">סגור שבוע ושמור בהיסטוריה</button>
-    </div>
-  </div>
-
-  <div class="panel">
-    <div class="dv-head"><h3>מגמה</h3><div class="scale" id="trendNote">—</div></div>
-    <svg class="chart" id="trendChart" viewBox="0 0 600 170" preserveAspectRatio="none"></svg>
-    <div class="chartlegend">
-      <div>▉ בלוקים בשבוע</div><div>● קריטריונים שסומנו</div>
-    </div>
-  </div>
-
-  <div class="panel">
-    <div class="dv-head"><h3>היסטוריה</h3><div class="scale" id="histCount">—</div></div>
-    <div class="hist" id="histList"></div>
-  </div>
-
-</section>
-
-<!-- ============ כלים ============ -->
-<section class="page" id="page-tools">
-  <div class="panel backup">
-    <div class="dv-head"><h3>גיבוי</h3><div class="scale">שמור לפני שמשהו נמחק</div></div>
-    <p class="hint">הנתונים שמורים רק בדפדפן הזה. ייצוא שומר הכול לקובץ, ייבוא מחזיר אותו.</p>
-    <div class="actions">
-      <button class="btn" id="expBtn">ייצא קובץ גיבוי</button>
-      <button class="btn sec" id="impBtn">ייבא קובץ</button>
-      <button class="ghost" id="showJson">הצג טקסט להעתקה</button>
-      <input type="file" id="impFile" accept="application/json" hidden>
-    </div>
-    <div id="undoWrap"></div>
-    <div id="jsonWrap" hidden><textarea id="jsonBox" readonly></textarea></div>
-  </div>
-
-  <div class="panel">
-    <div class="dv-head"><h3>יעד כושר שבועי</h3><div class="scale">למעקב החודשי</div></div>
-    <p class="hint">מתחילים ב־2 אימונים בשבוע. כשמרגישים מוכנים, מעלים ל־3 — השינוי חל מרגע העדכון, לא רטרואקטיבית.</p>
-    <label class="field"><span>אימוני כושר ליעד בשבוע</span>
-      <input type="number" id="fitTarget" min="1" max="14"></label>
-  </div>
-
-  <div class="panel">
-    <div class="dv-head"><h3>תבניות יום</h3><div class="scale" id="dtCount">—</div></div>
-    <div id="dayTplList"></div>
-    <div class="actions">
-      <button class="btn" id="newDayTpl">צור תבנית יום</button>
-    </div>
-    <div id="dayTplEditor"></div>
-  </div>
-
-  <div class="panel">
-    <div class="dv-head"><h3>תבניות ערב</h3><div class="scale" id="etCount">—</div></div>
-    <div id="eveTplList"></div>
-    <div class="actions">
-      <button class="btn" id="newEveTpl">צור תבנית ערב</button>
-    </div>
-    <div id="eveTplEditor"></div>
-  </div>
-</section>
-
-<!-- ============ מעקב חודשי ============ -->
-<section class="page" id="page-month">
-  <div class="panel">
-    <div class="dv-head"><h3>מעקב חודשי</h3><div class="scale" id="monthRange">—</div></div>
-    <div class="actions" style="margin:0 0 4px">
-      <button class="ghost" id="monthPrev">‹ הקודם</button>
-      <button class="ghost" id="monthThis">החודש הזה</button>
-      <button class="ghost" id="monthNext">הבא ›</button>
-    </div>
-    <p class="hint">התמונה מלאה לשבועות שסגרת (מטרות וסיכום ← סגור שבוע) ולשבוע הנוכחי. ימים ושבועות שעוד לא הגיעו לא נספרים כפספוס.</p>
-  </div>
-
-  <div class="panel">
-    <div class="dv-head"><h3>בלוקי לימודים</h3><div class="scale" id="mStudyScale">—</div></div>
-    <div class="mbar"><i id="mStudyBar" style="width:0%"></i></div>
-    <div id="mStudyMissed"></div>
-  </div>
-
-  <div class="panel">
-    <div class="dv-head"><h3>4 ארוחות ביום</h3><div class="scale" id="mMealScale">—</div></div>
-    <div class="mbar"><i id="mMealBar" style="width:0%"></i></div>
-    <div id="mMealMissed"></div>
-  </div>
-
-  <div class="panel">
-    <div class="dv-head"><h3>בישול · יעד 2 בשבוע</h3><div class="scale" id="mCookScale">—</div></div>
-    <div id="mCookList"></div>
-  </div>
-
-  <div class="panel">
-    <div class="dv-head"><h3>כושר · יעד <span id="mFitTarget">—</span> בשבוע</h3><div class="scale" id="mFitScale">—</div></div>
-    <div id="mFitList"></div>
-  </div>
-</section>
-
-<footer>הכול נשמר אוטומטית בדפדפן הזה. אפשר גם ללחוץ על "שמור שבוע" לאישור מיידי. מומלץ לייצא גיבוי מדי פעם.</footer>
-</div>
-
-<div class="savetoast" id="saveToast">השבוע נשמר ✓</div>
-<button class="savefab" id="saveNowBtn" type="button"><span class="ic">💾</span>שמור שבוע</button>
-
-<nav class="nav" id="nav">
-  <button data-tab="today" class="on"><span class="ic">☀</span>היום</button>
-  <button data-tab="plan"><span class="ic">▦</span>שבוע</button>
-  <button data-tab="course"><span class="ic">✦</span>קורס</button>
-  <button data-tab="more"><span class="ic">⋯</span>עוד</button>
-</nav>
-
-<div id="printarea"></div>
-<script>
 /* ============ תבניות בסיס ============ */
 const MORNING = [
   ["05:25","מודה אני, מקלחת ומי פה","personal"],
@@ -2839,8 +2014,10 @@ function save(){
       alert("השמירה נכשלה — כנראה שאין מקום פנוי בדפדפן. מומלץ לייצא גיבוי (עוד ← כלים) ולפנות מקום.");
     }
   }
+  cloudSaveDebounced();   /* אם מחוברים לחשבון — מסנכרן גם לענן, בלי לחסום */
 }
-function load(){
+/* טעינה מהמטמון המקומי בלבד (בלי renderAll) — משמשת גם כבסיס מהיר לפני שהסנכרון לענן מסתיים */
+function loadLocal(){
   try{
     const raw = localStorage.getItem('loz:v6') || localStorage.getItem('loz:v5') ||
                 localStorage.getItem('loz:v4') || localStorage.getItem('loz:v3') ||
@@ -2851,8 +2028,8 @@ function load(){
       ['loz:v2','loz:v3','loz:v4','loz:v5'].forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
     }
   }catch(e){}
-  renderAll();
 }
+function load(){ loadLocal(); renderAll(); }
 
 /* ============ ציור כללי ============ */
 function renderAll(){
@@ -3033,8 +2210,133 @@ document.getElementById("saveNowBtn").addEventListener("click", ()=>{
 /* שעון חי — מרענן את דף היום */
 setInterval(()=>{ if(tab === "today") renderToday(); }, 30000);
 
-renderQuote();
-load();
-</script>
-</body>
-</html>
+/* ============ Supabase — התחברות וסנכרון ============
+   כל עוד config.js ריק (SUPABASE_URL/SUPABASE_ANON_KEY), הבלוק הזה כבה לגמרי —
+   האפליקציה עובדת בדיוק כמו קודם, מקומית בלבד, בלי מסך התחברות. */
+const supa = (typeof SUPABASE_URL !== "undefined" && SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+let authMode  = "signin";   /* "signin" | "signup" */
+let cloudUser = null;
+let syncTimer = null;
+
+function showAuth(show){ document.getElementById("authWrap").hidden = !show; }
+function authError(msg){
+  const el = document.getElementById("authErr");
+  if(!msg){ el.hidden = true; el.textContent = ""; return; }
+  el.hidden = false; el.textContent = msg;
+}
+function setAuthMode(mode){
+  authMode = mode;
+  document.getElementById("authTitle").textContent = mode === "signup" ? "הרשמה" : "התחברות";
+  document.getElementById("authSub").textContent = mode === "signup"
+    ? "יוצרים חשבון חדש כדי להתחיל לסנכרן."
+    : "כדי לסנכרן את הלוז בין המכשירים שלך.";
+  document.getElementById("authSubmit").textContent = mode === "signup" ? "הרשמה" : "התחברות";
+  document.getElementById("authSwitch").textContent = mode === "signup"
+    ? "כבר יש לך חשבון? להתחברות" : "אין לך חשבון? להרשמה";
+  authError("");
+}
+
+/* טוען את המצב מהענן; אם אין עדיין רשומה לחשבון הזה — מעלה את מה שיש מקומית כדי לאתחל אותה */
+async function cloudLoadOrSeed(){
+  try{
+    const { data, error } = await supa.from("app_state").select("data").eq("user_id", cloudUser.id).maybeSingle();
+    if(error) throw error;
+    if(data && data.data) applyState(data.data);
+    else await cloudSaveNow();
+  }catch(e){
+    console.warn("cloud load failed — ממשיכים עם המטמון המקומי", e);
+  }
+}
+async function cloudSaveNow(){
+  if(!supa || !cloudUser) return;
+  const dot = document.getElementById("syncDot");
+  try{
+    const { error } = await supa.from("app_state")
+      .upsert({ user_id: cloudUser.id, data: stateObj(), updated_at: new Date().toISOString() });
+    if(error) throw error;
+    if(dot) dot.className = "syncdot ok";
+  }catch(e){
+    console.warn("cloud save failed", e);
+    if(dot) dot.className = "syncdot err";
+  }
+}
+function cloudSaveDebounced(){
+  if(!supa || !cloudUser) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(cloudSaveNow, 1200);
+}
+function renderAcct(){
+  const panel = document.getElementById("acctPanel");
+  if(!panel) return;
+  if(!supa || !cloudUser){ panel.hidden = true; return; }
+  panel.hidden = false;
+  document.getElementById("acctEmail").textContent = cloudUser.email || "—";
+  document.getElementById("syncScale").textContent = "מחובר";
+}
+async function afterSignedIn(user){
+  cloudUser = user;
+  showAuth(false);
+  const bh = document.getElementById("backupHint");
+  if(bh) bh.textContent = "הנתונים מסונכרנים אוטומטית לחשבון שלך, ונשמרים גם בדפדפן הזה כגיבוי מקומי מיידי.";
+  await cloudLoadOrSeed();
+  renderAcct();
+  renderAll();
+  save();
+}
+
+if(supa){
+  setAuthMode("signin");
+  document.getElementById("authSwitch").addEventListener("click", ()=>{
+    setAuthMode(authMode === "signin" ? "signup" : "signin");
+  });
+  document.getElementById("authSubmit").addEventListener("click", async ()=>{
+    const email = document.getElementById("authEmail").value.trim();
+    const pass = document.getElementById("authPass").value;
+    if(!email || pass.length < 6){ authError("צריך אימייל וסיסמה של לפחות 6 תווים."); return; }
+    authError("");
+    const btn = document.getElementById("authSubmit");
+    btn.disabled = true;
+    try{
+      if(authMode === "signup"){
+        const { data, error } = await supa.auth.signUp({ email, password: pass });
+        if(error) throw error;
+        if(!data.session){
+          authError("נרשמת! אם הפרויקט דורש אישור אימייל — לחצו על הקישור שנשלח אליכם, ואז התחברו.");
+          setAuthMode("signin");
+        }
+      } else {
+        const { error } = await supa.auth.signInWithPassword({ email, password: pass });
+        if(error) throw error;
+      }
+    }catch(e){
+      authError(e.message || "משהו השתבש. נסו שוב.");
+    }finally{
+      btn.disabled = false;
+    }
+  });
+  document.getElementById("authPass").addEventListener("keydown", e=>{
+    if(e.key === "Enter") document.getElementById("authSubmit").click();
+  });
+  document.getElementById("signOutBtn").addEventListener("click", async ()=>{
+    await supa.auth.signOut();
+  });
+
+  supa.auth.onAuthStateChange((event, session)=>{
+    if(session && session.user){
+      if(!cloudUser || cloudUser.id !== session.user.id) afterSignedIn(session.user);
+    } else {
+      cloudUser = null;
+      renderAcct();
+      showAuth(true);
+    }
+  });
+
+  renderQuote();
+  load();   /* מציג מיד את המטמון המקומי; ברגע שההתחברות נפתרת, afterSignedIn מרענן עם נתוני הענן */
+} else {
+  renderQuote();
+  load();
+}
