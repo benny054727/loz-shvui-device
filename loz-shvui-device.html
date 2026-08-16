@@ -1,0 +1,2724 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>בונה הלוז השבועי</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;900&family=Assistant:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FFFFFF; --surface:#FFFFFF; --surface2:#F4F7FB; --line:#E7ECF4;
+    --text:#1C2434; --muted:#7C889E;
+    --study:#2FA394;   --study-bg:#EAF6F4;
+    --work:#C6892F;    --work-bg:#FBF2E2;
+    --prayer:#7A69CE;  --prayer-bg:#EFEDFB;
+    --meal:#4F9E63;    --meal-bg:#EAF5EC;
+    --personal:#CD6E92;--personal-bg:#FBEEF3;
+    --sleep:#5A83BE;   --sleep-bg:#ECF2FA;
+    --none:#A8B2C4;
+    --radius:18px;
+    --shadow:0 1px 2px rgba(20,32,60,.04), 0 10px 28px rgba(20,32,60,.06);
+    --nav:76px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(760px 420px at 92% -12%, rgba(47,163,148,.07), transparent 62%),
+      radial-gradient(620px 400px at 4% -6%, rgba(122,105,206,.06), transparent 62%),
+      var(--bg);
+    color:var(--text); font-family:'Assistant',system-ui,sans-serif;
+    font-size:16px; line-height:1.5; min-height:100vh;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:18px 16px calc(var(--nav) + 28px)}
+
+  header{margin-bottom:14px}
+  .eyebrow{font-family:'Heebo',sans-serif;font-weight:700;font-size:11.5px;
+    letter-spacing:.18em;color:var(--study);margin-bottom:5px}
+  h1{font-family:'Heebo',sans-serif;font-weight:900;font-size:clamp(24px,6vw,36px);
+    line-height:1.05;margin:0 0 6px}
+  .sub{color:var(--muted);font-size:14.5px;max-width:52ch;margin:0}
+  h2{font-family:'Heebo',sans-serif;font-weight:700;font-size:19px;margin:0 0 4px}
+  .hint{color:var(--muted);font-size:13.5px;margin:0 0 14px}
+  .spacer{flex:1}
+  .page{display:none}
+  .page.on{display:block;animation:fade .22s ease both}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  /* ---------- ניווט תחתון ---------- */
+  .nav{
+    position:fixed;inset-inline:0;bottom:0;z-index:40;
+    background:rgba(255,255,255,.93);backdrop-filter:blur(10px);
+    border-top:1px solid var(--line);display:flex;
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+  .nav button{
+    flex:1;background:none;border:none;cursor:pointer;padding:6px 1px;min-width:0;
+    display:grid;gap:3px;justify-items:center;color:var(--muted);
+    font-family:'Heebo',sans-serif;font-weight:700;font-size:11px;
+  }
+  .nav .ic{width:22px;height:22px;display:grid;place-items:center;font-size:17px;line-height:1}
+  .nav button.on{color:var(--study)}
+  .nav button.on .ic{background:var(--study-bg);border-radius:8px}
+  .nav button:focus-visible{outline:2px solid var(--study);outline-offset:-2px}
+
+  /* ---------- רכיבים כלליים ---------- */
+  .panel,.dayview{background:var(--surface);border:1px solid var(--line);
+    border-radius:22px;padding:18px 16px;box-shadow:var(--shadow);margin-top:18px}
+  .panel .meter,.dayview .meter,.panel .focus{box-shadow:none}
+  .nav{transition:none}
+  .dv-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;
+    padding-bottom:13px;border-bottom:1px solid var(--line);margin-bottom:4px}
+  .dv-head h3{font-family:'Heebo',sans-serif;font-weight:900;font-size:22px;margin:0}
+  .scale{font-size:13px;color:var(--muted);background:var(--surface2);
+    border-radius:99px;padding:4px 12px}
+  .scale em{font-style:normal;color:var(--study);font-weight:700}
+  .btn{background:var(--study);color:#fff;border:none;border-radius:12px;
+    padding:10px 16px;font-family:'Heebo',sans-serif;font-weight:700;font-size:14px;cursor:pointer}
+  .btn.sec{background:var(--surface2);color:var(--text)}
+  .btn{transition:filter .16s ease,transform .12s ease}
+  .btn:hover{filter:brightness(1.04)}
+  .btn:active{transform:scale(.97)}
+  .btn:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+  .ghost{background:transparent;border:1px solid var(--line);color:var(--muted);
+    border-radius:99px;padding:6px 13px;font-family:inherit;font-size:12.5px;cursor:pointer}
+  .ghost:hover{color:var(--text);border-color:#CBD5E5}
+  .ghost:focus-visible,.openday:focus-visible{outline:2px solid var(--study);outline-offset:2px}
+  .openday{background:transparent;border:1px dashed var(--line);color:var(--muted);
+    border-radius:12px;padding:11px;font-family:inherit;font-size:13.5px;cursor:pointer;
+    width:100%;margin-top:12px}
+  .openday:hover{color:var(--text);border-color:var(--study)}
+  input[type=date],input[type=text],input[type=time],input[type=number],select,textarea{
+    background:#fff;border:1px solid var(--line);border-radius:12px;
+    padding:9px 11px;font-family:inherit;font-size:14px;color:var(--text)}
+  select{appearance:none;cursor:pointer;width:100%}
+  input:focus-visible,select:focus-visible,textarea:focus-visible{
+    outline:2px solid var(--study);outline-offset:2px}
+  .empty{color:var(--muted);padding:18px 4px;font-size:14.5px}
+  .tick{width:22px;height:22px;border-radius:7px;flex:none;border:2px solid var(--study);
+    background:#fff;display:grid;place-items:center;margin-top:1px}
+  .row.block.done .tick,.crit.on .tick,.goal.on .tick,.lg.on .tick{
+    background:var(--study);border-color:var(--study)}
+  .row.block.done .tick::after,.crit.on .tick::after,.goal.on .tick::after,.lg.on .tick::after{
+    content:"✓";color:#fff;font-size:13px;font-weight:700;line-height:1}
+
+  /* ---------- דף היום ---------- */
+  .now-card{
+    background:linear-gradient(140deg,var(--study-bg),#F5F3FD);
+    border:1px solid var(--line);border-radius:24px;padding:20px 18px;
+    box-shadow:var(--shadow);margin-bottom:14px;
+  }
+  .now-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:12px}
+  .now-day{font-family:'Heebo',sans-serif;font-weight:900;font-size:20px}
+  .now-day i{font-style:normal;font-weight:400;font-size:13px;color:var(--muted);margin-inline-start:6px}
+  .now-clock{font-family:'Heebo',sans-serif;font-weight:900;font-size:22px;
+    direction:ltr;unicode-bidi:isolate;font-variant-numeric:tabular-nums}
+  .now-lbl{font-size:11.5px;letter-spacing:.14em;color:var(--study);
+    font-family:'Heebo',sans-serif;font-weight:700;margin-bottom:4px}
+  .now-what{font-family:'Heebo',sans-serif;font-weight:900;font-size:clamp(21px,5.5vw,28px);
+    line-height:1.25;margin:0}
+  .now-sub{color:var(--muted);font-size:13.5px;margin-top:5px}
+  .bar{height:8px;background:#fff;border-radius:99px;margin-top:14px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--study);border-radius:99px}
+  .next{display:flex;gap:10px;align-items:baseline;margin-top:14px;
+    padding-top:12px;border-top:1px solid rgba(28,36,52,.10);font-size:14px}
+  .next b{font-family:'Heebo',sans-serif;font-weight:700}
+  .next .t{color:var(--muted);font-size:12.5px;direction:ltr;unicode-bidi:isolate}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+  .chip{
+    display:flex;align-items:center;gap:6px;background:var(--surface2);
+    border:1px solid transparent;border-radius:12px;padding:8px 11px;
+    font-family:inherit;font-size:13px;cursor:pointer;color:var(--text);
+    transition:background .16s ease,border-color .16s ease,transform .12s ease;
+  }
+  .chip:active{transform:scale(.96)}
+  .chip b{font-family:'Heebo',sans-serif;font-weight:700}
+  .chip small{color:var(--muted);font-size:11.5px;direction:ltr;unicode-bidi:isolate}
+  .chip.on{background:var(--study-bg);border-color:var(--study)}
+  .chip.on::after{content:"✓";color:var(--study);font-weight:700}
+  .chip.past:not(.on){opacity:.55}
+  .chip:focus-visible{outline:2px solid var(--study);outline-offset:2px}
+
+  .warn{background:#FBF2E2;border:1px solid #EEDCB4;border-radius:14px;
+    padding:10px 12px;font-size:13px;color:#6B4E14;margin-bottom:12px;
+    display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+  .warn button{border-color:#E3CE9E;color:#6B4E14}
+
+  /* ---------- בחירת ימים ---------- */
+  .ovdays{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;margin-bottom:6px}
+  .ovpick{flex:0 0 auto;background:var(--surface2);border:1px solid transparent;color:var(--muted);
+    border-radius:14px;padding:8px 12px;font-family:inherit;font-size:13px;cursor:pointer;
+    line-height:1.25;text-align:center;min-width:64px}
+  .ovpick b{display:block;font-family:'Heebo',sans-serif;font-weight:700;font-size:14px;color:inherit}
+  .ovpick small{font-size:11px;opacity:.9;direction:ltr;unicode-bidi:isolate}
+  .ovpick.on{background:var(--study);border-color:var(--study);color:#fff}
+  .ovpick.today:not(.on){border-color:var(--study);color:var(--text)}
+  .ovpick:focus-visible{outline:2px solid var(--study);outline-offset:2px}
+
+  /* ---------- דף לוז ---------- */
+  .datebar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:12px 14px;box-shadow:var(--shadow);margin-bottom:14px}
+  .datebar label{font-size:13px;color:var(--muted)}
+  .datebar .range{font-family:'Heebo',sans-serif;font-weight:900;font-size:18px;
+    direction:ltr;unicode-bidi:isolate}
+  .weekbar{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 20px}
+  .stat{flex:1 1 150px;background:var(--surface);border:1px solid var(--line);
+    border-radius:var(--radius);padding:13px 15px;box-shadow:var(--shadow)}
+  .stat b{display:block;font-family:'Heebo',sans-serif;font-weight:900;font-size:25px;
+    line-height:1.1;font-variant-numeric:tabular-nums}
+  .stat span{color:var(--muted);font-size:12.5px}
+  .stat span i{font-style:normal;white-space:nowrap}
+  .stat.target b{color:var(--study)}
+  .stat.max b{color:var(--work)}
+  .daycard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:15px;display:grid;gap:10px;box-shadow:var(--shadow)}
+  .daycard.active{border-color:var(--study);box-shadow:0 0 0 3px var(--study-bg),var(--shadow)}
+  .daycard.rest{background:var(--surface2);box-shadow:none}
+  .daycard-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+  .dayname{font-family:'Heebo',sans-serif;font-weight:900;font-size:19px}
+  .dayname i{font-style:normal;font-weight:400;font-size:13px;color:var(--muted);
+    margin-inline-start:6px;direction:ltr;unicode-bidi:isolate}
+  .daymeta{font-size:13px;color:var(--muted)}
+  .daymeta em{font-style:normal;color:var(--study);font-weight:700}
+  .selects{display:grid;gap:8px;grid-template-columns:1fr 1fr}
+  label.field span{display:block;font-size:11.5px;color:var(--muted);
+    letter-spacing:.06em;margin-bottom:4px}
+
+  .ribbon{position:relative;padding:14px 22px 4px 0;margin:0}
+  .ribbon::before{content:"";position:absolute;top:0;bottom:14px;right:6px;width:2px;
+    background:linear-gradient(to bottom,var(--line),rgba(231,236,244,.15))}
+  .row{position:relative;display:flex;gap:12px;align-items:flex-start;padding:5px 18px 5px 0}
+  .row::before{content:"";position:absolute;right:1px;top:14px;width:12px;height:12px;
+    border-radius:50%;background:var(--bg);border:2px solid var(--tone,var(--none))}
+  .row.block{padding:7px 18px 7px 0}
+  .row.block::before{background:var(--tone)}
+  .row.now .what{box-shadow:0 0 0 2px var(--study)}
+  .row.now::before{background:var(--study);box-shadow:0 0 0 4px var(--study-bg)}
+  .time{font-family:'Heebo',sans-serif;font-weight:700;font-size:12.5px;color:var(--muted);
+    min-width:88px;padding-top:3px;font-variant-numeric:tabular-nums}
+  .time.num{direction:ltr;text-align:right;unicode-bidi:isolate}
+  .what{flex:1;font-size:15px;padding-top:1px}
+  .row.block .what{background:var(--surface2);border-right:3px solid var(--tone);
+    border-radius:0 10px 10px 0;padding:8px 11px;font-weight:600;
+    display:flex;gap:10px;align-items:flex-start;cursor:pointer;user-select:none}
+  .row.block.done .what{background:var(--study-bg)}
+  .row.block.done::before{box-shadow:0 0 0 4px var(--study-bg)}
+  .row.dim .what{color:var(--muted)}
+  .blk{flex:1;min-width:0}
+  .blk-note{display:block;width:100%;margin-top:3px;background:transparent;border:none;
+    border-bottom:1px dashed #C9D3E2;color:var(--text);font-family:inherit;
+    font-size:12.5px;padding:2px 0;border-radius:0}
+  .blk-note::placeholder{color:var(--muted)}
+  .blk-note:focus{outline:none;border-bottom-color:var(--study)}
+  .meter{background:var(--surface2);border-radius:16px;padding:14px 16px;
+    margin:16px 0 6px;display:grid;gap:12px}
+  .meter-top{display:flex;align-items:center;gap:12px}
+  .meter-count{font-family:'Heebo',sans-serif;font-weight:900;font-size:34px;
+    line-height:1;color:var(--study);min-width:44px}
+  .meter-word{font-weight:700;font-size:16px;line-height:1.2}
+  .meter-sub{color:var(--muted);font-size:12.5px;margin-top:2px}
+  .pips{display:flex;gap:5px;margin-top:16px}
+  .pip{flex:1 1 0;height:9px;border-radius:99px;background:#E1E8F1;position:relative}
+  .pip.on{background:var(--study)}
+  .pip.goal::after{content:"יעד";position:absolute;top:-17px;right:50%;
+    transform:translateX(50%);font-size:10px;color:var(--muted)}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px;padding-top:13px;
+    border-top:1px solid var(--line)}
+  .legend div{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}
+  .dot{width:9px;height:9px;border-radius:50%}
+  .weeklist{margin-top:18px;background:var(--surface);border:1px solid var(--line);
+    border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  .weeklist summary{cursor:pointer;padding:14px 16px;font-family:'Heebo',sans-serif;
+    font-weight:700;font-size:15px;list-style:none}
+  .weeklist summary::-webkit-details-marker{display:none}
+  .weeklist summary::after{content:"▾";float:left;color:var(--muted)}
+  .weeklist[open] summary{border-bottom:1px solid var(--line)}
+  .weeklist[open] summary::after{content:"▴"}
+  .wrow{display:flex;align-items:baseline;gap:10px;width:100%;text-align:right;
+    background:none;border:none;border-bottom:1px solid var(--line);
+    padding:11px 16px;font-family:inherit;font-size:13.5px;color:var(--text);cursor:pointer}
+  .wrow:last-child{border-bottom:none}
+  .wrow.on{background:var(--study-bg)}
+  .wrow b{font-family:'Heebo',sans-serif;font-weight:700;font-size:14px;min-width:42px}
+  .wrow i{font-style:normal;color:var(--muted);font-size:12px;min-width:34px;
+    direction:ltr;unicode-bidi:isolate}
+  .wrow span{color:var(--muted);flex:1}
+  .wrow em{font-style:normal;color:var(--study);font-weight:700;white-space:nowrap}
+
+  .modes{display:flex;gap:6px;background:var(--surface2);padding:5px;
+    border-radius:99px;margin-bottom:14px}
+  .modes button{flex:1;border:none;background:transparent;color:var(--muted);
+    font-family:'Heebo',sans-serif;font-weight:700;font-size:14px;
+    padding:9px 8px;border-radius:99px;cursor:pointer;transition:background .18s ease}
+  .modes button.on{background:#fff;color:var(--text);box-shadow:var(--shadow)}
+  .modes button:focus-visible{outline:2px solid var(--study);outline-offset:2px}
+  #ovGrid{display:grid;gap:12px}
+  @media(min-width:720px){#ovGrid{grid-template-columns:1fr 1fr}}
+
+  /* ---------- מבט שבועי ---------- */
+  .ovhead{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:12px}
+  .ovhead .range{font-family:'Heebo',sans-serif;font-weight:900;font-size:20px;
+    direction:ltr;unicode-bidi:isolate}
+  .ovcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:15px 16px;box-shadow:var(--shadow)}
+  .ovcard.rest{background:var(--surface2);box-shadow:none}
+  .ovcard.today{border-color:var(--study);box-shadow:0 0 0 3px var(--study-bg),var(--shadow)}
+  .ovtop{display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+    padding-bottom:8px;border-bottom:1.5px solid var(--text);margin-bottom:6px}
+  .ovday{font-family:'Heebo',sans-serif;font-weight:900;font-size:18px}
+  .ovday i{font-style:normal;font-weight:400;font-size:13px;color:var(--muted);margin-inline-start:6px}
+  .ovchip{font-size:11.5px;font-weight:700;color:#1F6F65;background:var(--study-bg);
+    border-radius:99px;padding:3px 9px;white-space:nowrap}
+  .ovtpl{font-size:12px;color:var(--muted);margin-bottom:8px}
+  .ovpart{font-size:10.5px;letter-spacing:.08em;color:var(--muted);margin:8px 0 3px;
+    font-family:'Heebo',sans-serif;font-weight:700}
+  .ovrow{display:flex;gap:9px;font-size:13px;padding:2.5px 0}
+  .ovrow .t{min-width:76px;color:var(--muted);font-variant-numeric:tabular-nums;flex:none}
+  .ovrow .t.num{direction:ltr;text-align:right;unicode-bidi:isolate}
+  .ovrow .x{flex:1;border-right:3px solid var(--c,var(--none));padding-right:8px}
+  .ovrow.study .x{background:var(--surface2);border-radius:0 8px 8px 0;padding:3px 8px;font-weight:600}
+  .ovrow.study.done .x{background:var(--study-bg)}
+  .ovrow.study.done .x::after{content:" ✓";color:var(--study);font-weight:700}
+  .ovrow .x small{display:block;font-weight:400;font-size:11.5px;color:var(--muted)}
+
+  /* ---------- מטרות, סיכום, גרף ---------- */
+  .addgoal{display:flex;gap:8px;margin:12px 0}
+  .addgoal input{flex:1}
+  .goals,.crits{display:grid;gap:8px;margin:10px 0 14px}
+  .goal,.crit,.lg{display:flex;align-items:flex-start;gap:11px;width:100%;text-align:right;
+    background:var(--surface2);border:1px solid transparent;border-radius:14px;
+    padding:11px 13px;font-family:inherit;font-size:15px;color:var(--text);cursor:pointer;
+    transition:background .16s ease,border-color .16s ease}
+  .goal small,.crit small,.lg small{display:block;color:var(--muted);font-size:12.5px;font-weight:400}
+  .crit b{font-weight:700}
+  .goal .tick,.crit .tick,.lg .tick{border-color:var(--muted)}
+  .goal.on,.crit.on,.lg.on{background:var(--study-bg);border-color:var(--study)}
+  .goal.on .txt,.lg.on .txt{color:var(--muted)}
+  .goal .txt,.lg .txt{flex:1}
+  .goal .del,.lg .del,.hrow .del{background:none;border:none;color:var(--muted);
+    font-size:18px;cursor:pointer;line-height:1;padding:0 4px}
+  .verdict{border-top:1px solid var(--line);padding-top:13px;display:flex;
+    align-items:baseline;gap:10px;flex-wrap:wrap}
+  .verdict b{font-family:'Heebo',sans-serif;font-weight:900;font-size:19px}
+  .verdict span{color:var(--muted);font-size:13.5px}
+  .hist{display:grid;gap:8px;margin-top:10px}
+  .hrow{display:flex;align-items:center;gap:10px;background:var(--surface2);
+    border-radius:14px;padding:11px 13px;font-size:14px}
+  .hrow b{font-family:'Heebo',sans-serif;font-weight:900;font-size:14.5px;min-width:96px;
+    direction:ltr;unicode-bidi:isolate;text-align:right}
+  .hrow small{color:var(--muted);font-size:12.5px}
+  .hrow .del{margin-inline-start:auto}
+  .hitem{display:grid;gap:6px}
+  .hdet{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 13px}
+  .hday{padding:6px 0;border-bottom:1px dotted var(--line);font-size:13px}
+  .hday:last-child{border-bottom:none}
+  .hday b{font-family:'Heebo',sans-serif;font-weight:700;margin-inline-end:8px}
+  .hday span{color:var(--muted);font-size:12.5px}
+  .hday ul{margin:5px 0 0;padding-inline-start:18px;color:var(--muted);font-size:12.5px}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .chart{width:100%;height:170px;margin-top:6px}
+  .chart .lbl{font-size:9px;fill:#7C889E;font-family:'Assistant',sans-serif}
+  .chart .val{font-size:10px;fill:#1C2434;font-family:'Heebo',sans-serif;font-weight:700}
+  .chartlegend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:4px}
+  .quote{display:flex;align-items:center;gap:10px;margin-top:16px;padding:12px 15px;
+    background:var(--surface2);border-radius:16px}
+  .quote .qtext{font-family:'Heebo',sans-serif;font-weight:700;font-size:14.5px;
+    line-height:1.35;margin:0;flex:1}
+  .quote .qmeta{color:var(--muted);font-size:11.5px;white-space:nowrap}
+  .quote .qnext{background:none;border:none;color:var(--muted);font-size:17px;
+    cursor:pointer;padding:2px 4px;line-height:1}
+  .quote .qnext:hover{color:var(--study)}
+  .focuswrap{background:var(--surface2);border-radius:14px;margin-top:12px;overflow:hidden}
+  .focuswrap summary{cursor:pointer;padding:11px 13px;font-size:13.5px;
+    font-family:'Heebo',sans-serif;font-weight:700;list-style:none}
+  .focuswrap summary::-webkit-details-marker{display:none}
+  .focuswrap summary::after{content:"▾";float:left;color:var(--muted)}
+  .focuswrap[open] summary::after{content:"▴"}
+  .focuswrap .focus{border-radius:0;background:transparent;padding-top:0}
+  .bigbtn{width:100%;margin-top:16px;background:var(--study);color:#fff;border:none;
+    border-radius:16px;padding:15px;font-family:'Heebo',sans-serif;font-weight:900;
+    font-size:17px;cursor:pointer;transition:transform .12s ease,filter .18s ease}
+  .bigbtn:active{transform:scale(.985)}
+  .bigbtn.undo{background:#fff;color:var(--study);box-shadow:inset 0 0 0 2px var(--study)}
+  .bigbtn:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+
+  /* ---------- קורס ---------- */
+  .goalcard{background:linear-gradient(140deg,var(--study-bg),#F5F3FD);
+    border:1px solid var(--line);border-radius:24px;padding:20px 18px;
+    box-shadow:var(--shadow);margin-bottom:14px}
+  .goalcard .gtop{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .goalcard .gbig{font-family:'Heebo',sans-serif;font-weight:900;
+    font-size:clamp(20px,5vw,26px);line-height:1.2}
+  .goalcard .gsub{color:var(--muted);font-size:13px;margin-top:3px}
+  .goalcard .pace{font-family:'Heebo',sans-serif;font-weight:700;font-size:13px;
+    background:#fff;border-radius:99px;padding:5px 12px;white-space:nowrap}
+  .goalcard .pace.late{background:#FBF2E2;color:#6B4E14}
+  .goalcard .pace.ok{color:#1F6F65}
+  .gbar{height:10px;background:#fff;border-radius:99px;margin-top:14px;overflow:hidden}
+  .gbar i{display:block;height:100%;background:var(--study);border-radius:99px}
+  .ckpt{margin-top:12px;padding-top:11px;border-top:1px solid rgba(28,36,52,.10);
+    font-size:13px;color:var(--muted)}
+
+  .focus{display:grid;gap:10px;background:var(--surface2);border-radius:16px;padding:13px 14px}
+  .focus .frow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .focus .flbl{font-size:11.5px;letter-spacing:.12em;color:var(--muted);
+    font-family:'Heebo',sans-serif;font-weight:700}
+  .stages{display:flex;gap:6px;flex-wrap:wrap}
+  .stg{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px;
+    font-family:inherit;font-size:13px;cursor:pointer;color:var(--muted)}
+  .stg.on{background:var(--study);border-color:var(--study);color:#fff;font-weight:700}
+  .stg.fin{border-color:var(--study);color:var(--study)}
+  .counter{display:flex;align-items:center;gap:8px}
+  .counter button{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);
+    background:#fff;font-size:17px;cursor:pointer;line-height:1}
+  .counter b{font-family:'Heebo',sans-serif;font-weight:900;font-size:17px;min-width:76px;
+    text-align:center;font-variant-numeric:tabular-nums}
+
+  .lsn{display:flex;align-items:center;gap:10px;background:var(--surface2);
+    border-radius:14px;padding:10px 13px;margin-bottom:7px;font-size:14px}
+  .lsn.done{background:var(--study-bg)}
+  .lsn.active{outline:2px solid var(--study)}
+  .lsn b{font-family:'Heebo',sans-serif;font-weight:900;min-width:64px}
+  .lsn .bars{flex:1;display:flex;gap:4px}
+  .lsn .sb{flex:1;height:7px;border-radius:99px;background:#E1E8F1;overflow:hidden}
+  .lsn .sb i{display:block;height:100%;background:var(--study)}
+  .lsn small{color:var(--muted);font-size:12px;white-space:nowrap}
+  .lsn .go{background:none;border:none;color:var(--study);font-size:13px;
+    font-family:'Heebo',sans-serif;font-weight:700;cursor:pointer}
+  .loadbox{background:var(--surface2);border-radius:14px;padding:12px 14px;font-size:13.5px}
+  .loadbox b{font-family:'Heebo',sans-serif;font-weight:700}
+  .loadbox.over{background:#FBF2E2;color:#6B4E14}
+  .wk{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+  .wkchip{background:#fff;border:1px solid var(--line);border-radius:12px;padding:7px 11px;
+    font-size:13px;cursor:pointer;display:flex;gap:7px;align-items:center}
+  .wkchip.on{background:var(--study-bg);border-color:var(--study);font-weight:700}
+  .errrow{display:flex;gap:10px;align-items:flex-start;background:var(--surface2);
+    border-radius:14px;padding:10px 13px;margin-bottom:7px;font-size:14px}
+  .errrow.on{background:var(--study-bg);opacity:.75}
+  .errrow .txt{flex:1}
+  .errrow small{color:var(--muted);font-size:12px}
+
+  /* ---------- אוכל ---------- */
+  .mday{background:var(--surface2);border-radius:16px;padding:12px 14px;margin-bottom:9px}
+  .mday-top{display:flex;justify-content:space-between;align-items:baseline;
+    margin-bottom:8px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+  .mday-top b{font-family:'Heebo',sans-serif;font-weight:900;font-size:15px}
+  .mday-top i{font-style:normal;color:var(--muted);font-size:12px;
+    direction:ltr;unicode-bidi:isolate}
+  .mrow{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .mrow .mt{min-width:70px;font-size:11.5px;color:var(--muted);
+    font-family:'Heebo',sans-serif;font-weight:700}
+  .mrow select{flex:1;font-size:13px;padding:7px 9px;background:#fff}
+  .meals{display:grid;gap:7px;margin-top:10px}
+  .meal{display:flex;align-items:baseline;gap:9px;background:var(--surface2);
+    border-radius:12px;padding:9px 12px;font-size:14px}
+  .meal b{font-family:'Heebo',sans-serif;font-weight:700;min-width:52px;
+    direction:ltr;unicode-bidi:isolate;color:var(--muted);font-size:12.5px}
+  .meal span{flex:1}
+  .meal.empty span{color:var(--muted)}
+  .meal.now{background:var(--study-bg);outline:1px solid var(--study)}
+  .libitem{display:flex;gap:10px;align-items:baseline;padding:9px 14px;
+    border-bottom:1px solid var(--line);font-size:13.5px}
+  .libitem:last-child{border-bottom:none}
+  .libitem b{font-family:'Heebo',sans-serif;font-weight:700;flex:1}
+  .libitem small{color:var(--muted);font-size:12px}
+
+  /* ---------- כלים ותבניות ---------- */
+  .tpl{display:flex;align-items:center;gap:10px;background:var(--surface2);
+    border-radius:14px;padding:10px 13px;font-size:14px;margin-bottom:7px}
+  .tpl b{font-family:'Heebo',sans-serif;font-weight:700;flex:1}
+  .tpl small{color:var(--muted);font-size:12px}
+  .tag{font-size:10.5px;font-weight:700;border-radius:99px;padding:2px 8px;
+    background:#fff;color:var(--muted);border:1px solid var(--line)}
+  .tag.mine{background:var(--study-bg);color:#1F6F65;border-color:transparent}
+  .ed{display:grid;gap:9px;margin-top:12px}
+  .edrow{display:flex;gap:6px;align-items:center}
+  .edrow input.t1{width:88px;flex:none}
+  .edrow input.mins{width:74px;flex:none}
+  input.tm{direction:ltr;text-align:center;font-variant-numeric:tabular-nums;
+    letter-spacing:.02em}
+  input.mins{direction:ltr;text-align:center}
+  .edhead input.ends{width:100%}
+  .edrow input.txt{flex:1;min-width:0}
+  .edrow select.tone{width:104px;flex:none}
+  .edrow .x{background:none;border:none;color:var(--muted);font-size:17px;cursor:pointer;padding:0 3px}
+  .edhead{display:grid;gap:8px;grid-template-columns:1fr 110px}
+  .backup textarea{width:100%;min-height:90px;font-size:11.5px;font-family:ui-monospace,monospace;
+    direction:ltr;text-align:left}
+
+  footer{margin-top:24px;color:var(--muted);font-size:12.5px;text-align:center}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  /* ---------- הדפסה ל־PDF ---------- */
+  #printarea{display:none}
+  @media print{
+    @page{size:A4 portrait;margin:12mm 11mm}
+    html,body{background:#fff!important}
+    .wrap,.nav{display:none!important}
+    #printarea{display:block;color:#16202F;
+      -webkit-print-color-adjust:exact;print-color-adjust:exact}
+    #printarea section{page-break-after:always;break-after:page}
+    #printarea section:last-child{page-break-after:auto;break-after:auto}
+    .pcover{padding-top:26mm;text-align:center}
+    .pcover h1{font-family:'Heebo',sans-serif;font-weight:900;font-size:32pt;margin:0}
+    .pcover .prange{font-size:15pt;margin:3mm 0 12mm;color:#2FA394;font-weight:700;
+      direction:ltr;unicode-bidi:isolate}
+    .pcover .pstats{display:flex;justify-content:center;gap:6mm;margin-bottom:12mm}
+    .pcover .pstat{border:.6pt solid #C9D4E3;border-radius:4mm;padding:4mm 7mm;min-width:34mm}
+    .pcover .pstat b{display:block;font-family:'Heebo',sans-serif;font-size:20pt;line-height:1}
+    .pcover .pstat span{font-size:9pt;color:#5C6A80}
+    .pcover .pg{text-align:right;max-width:120mm;margin:0 auto;border-top:1pt solid #16202F;padding-top:4mm}
+    .pcover .pg h2{font-family:'Heebo',sans-serif;font-size:13pt;margin:0 0 3mm}
+    .pcover .pg div{font-size:11pt;padding:1.6mm 0;border-bottom:.4pt dotted #C9D4E3}
+    .pcover .note{margin-top:14mm;font-size:9.5pt;color:#5C6A80}
+    .pday .ph{display:flex;align-items:flex-end;justify-content:space-between;
+      border-bottom:2pt solid #16202F;padding-bottom:2mm;margin-bottom:2mm}
+    .pday .ph h2{font-family:'Heebo',sans-serif;font-weight:900;font-size:17pt;margin:0}
+    .pday .ph h2 span{font-size:12pt;font-weight:400;color:#5C6A80;margin-inline-start:3mm}
+    .pday .chip{font-family:'Heebo',sans-serif;font-weight:700;font-size:10pt;
+      background:#EAF6F4;color:#1F6F65;border-radius:99px;padding:1.6mm 4mm;white-space:nowrap}
+    .pday .ptpl{font-size:9pt;color:#5C6A80;margin-bottom:2mm}
+    .pday h3{font-family:'Heebo',sans-serif;font-size:9.5pt;letter-spacing:.06em;
+      color:#5C6A80;margin:0 0 1mm;padding-top:1.5mm}
+    .pday table{width:100%;border-collapse:collapse;font-size:9pt;line-height:1.2;margin-bottom:1mm}
+    .pday td{padding:.72mm 0;vertical-align:top;border-bottom:.35pt solid #E7ECF4}
+    .pday td.pt{width:25mm;color:#5C6A80;white-space:nowrap;font-variant-numeric:tabular-nums}
+    .pday td.pt.num{direction:ltr;text-align:right;unicode-bidi:isolate}
+    .pday td.pd{padding-right:3mm;border-right:2.4pt solid var(--c,#A8B2C4)}
+    .pday tr.study td.pd{background:#EAF6F4;font-weight:700}
+    .pday tr.study td.pd i{display:block;font-style:normal;font-weight:400;font-size:8.5pt;color:#5C6A80}
+    .pday .pfoot{margin-top:2.5mm;padding-top:1.5mm;border-top:.5pt solid #C9D4E3;
+      font-size:8.5pt;color:#5C6A80;display:flex;justify-content:space-between}
+    .pday .pfoot .pr{direction:ltr;unicode-bidi:isolate}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow" id="hdrEyebrow">גרסה למכשיר שלך · 9 · מערכת האוכל</div>
+  <h1 id="hdrTitle">בונה הלוז השבועי</h1>
+  <p class="sub" id="hdrSub">היום שלי, בניית השבוע, מבט מלא, מטרות וכלים.</p>
+</header>
+
+<!-- ============ היום שלי ============ -->
+<section class="page on" id="page-today">
+  <div class="now-card" id="nowCard"></div>
+  <div class="panel" id="todayBlocks"></div>
+  <div class="panel" id="todayMeals"></div>
+  <div class="panel" id="todayGoals"></div>
+  <div class="quote" id="quoteBox"></div>
+</section>
+
+<!-- ============ לוז שבועי ============ -->
+<section class="page" id="page-plan">
+  <div class="datebar">
+    <label for="wstart">שבוע שמתחיל ביום ראשון</label>
+    <input type="date" id="wstart">
+    <div class="range" id="rangeTxt">—</div>
+    <div class="spacer"></div>
+    <button class="btn" id="pdfBtn">הפק PDF</button>
+  </div>
+
+  <div class="modes" id="planModes">
+    <button data-mode="day" class="on">יום</button>
+    <button data-mode="week">כל השבוע</button>
+  </div>
+
+  <div class="weekbar">
+    <div class="stat target"><b id="wTarget">—</b><span>יעד בלוקים לשבוע</span></div>
+    <div class="stat max"><b id="wMax">—</b><span>פוטנציאל אם הכול שקט</span></div>
+    <div class="stat"><b id="wHours">—</b><span>לימוד נטו ביעד · <i id="hoursCalc"></i></span></div>
+    <div class="stat"><b id="wDone">—</b><span>בלוקים שסימנת השבוע</span></div>
+  </div>
+
+  <div id="planBanner"></div>
+  <div id="planDayWrap">
+    <div class="ovdays" id="planDays"></div>
+    <div id="dayEditor"></div>
+    <div class="dayview" id="dayview"></div>
+    <div id="ovEditor"></div>
+    <details class="weeklist">
+      <summary>סקירת כל השבוע בשורות</summary>
+      <div id="weekRows"></div>
+    </details>
+  </div>
+
+  <div id="planWeekWrap" hidden>
+    <div class="ovhead">
+      <div class="scale" id="ovSummary">—</div>
+    </div>
+    <div id="ovGrid"></div>
+  </div>
+</section>
+
+<!-- ============ מבט שבועי ============ -->
+<!-- ============ קורס ============ -->
+<section class="page" id="page-course">
+  <div class="goalcard" id="courseGoal"></div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>על מה אני עובד עכשיו</h3>
+      <div class="scale" id="focusNote">—</div></div>
+    <div id="focusBox"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>שיעורי השבוע</h3>
+      <div class="scale" id="wkRange">—</div></div>
+    <div class="wk" id="wkChips"></div>
+    <div class="loadbox" id="loadBox">—</div>
+    <div class="actions">
+      <button class="btn" id="allocBtn">שבץ לשבוע</button>
+      <button class="ghost" id="allocClear">נקה שיבוץ</button>
+    </div>
+    <div id="allocPreview"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>כל השיעורים</h3>
+      <div class="scale" id="lsnNote">—</div></div>
+    <div id="lsnList"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>בנק טעויות</h3>
+      <div class="scale" id="errNote">—</div></div>
+    <p class="hint">שאלות שטעית בהן. אלה חומר החזרה של תחילת יום הלימודים הבא.</p>
+    <div class="addgoal">
+      <input type="text" id="errInput" placeholder="לדוגמה: חישוב תשואה ריאלית מול נומינלית">
+      <button class="btn" id="addErr">הוסף</button>
+    </div>
+    <div id="errList"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>הגדרות הקורס</h3></div>
+    <div class="ed">
+      <div class="edhead">
+        <input type="text" id="cName" placeholder="שם הקורס">
+        <input type="number" id="cTotal" min="1" max="99" placeholder="שיעורים">
+      </div>
+      <label class="field"><span>תאריך יעד לסיום</span><input type="date" id="cDeadline"></label>
+      <label class="field"><span>עמודים בבלוק אחד (קריאה + השמעה)</span>
+        <input type="number" id="cPpb" min="1" max="60"></label>
+      <label class="field"><span>דקות ל־15 השאלות</span>
+        <input type="number" id="cQmin" min="0" max="300"></label>
+      <div class="actions"><button class="btn" id="saveCourse">שמור הגדרות</button></div>
+    </div>
+  </div>
+</section>
+
+<section class="page" id="page-more">
+  <div class="modes" id="subNav">
+    <button data-sub="goals" class="on">מטרות וסיכום</button>
+    <button data-sub="food">אוכל</button>
+    <button data-sub="tools">כלים ותבניות</button>
+  </div>
+</section>
+
+<section class="page" id="page-food">
+  <div class="panel">
+    <div class="dv-head"><h3>מה מבשלים השבוע</h3>
+      <div class="scale" id="cookRange">—</div></div>
+    <div class="selects">
+      <label class="field"><span>מוצ״ש — לראשון עד שלישי</span>
+        <select id="cookSat"></select></label>
+      <label class="field"><span>שלישי — לרביעי עד שישי</span>
+        <select id="cookTue"></select></label>
+    </div>
+    <div id="cookInfo"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>תפריט השבוע</h3>
+      <div class="scale" id="menuNote">—</div></div>
+    <div class="actions" style="margin:0 0 12px">
+      <button class="ghost" id="menuFill">מלא לפי ברירת מחדל</button>
+      <button class="ghost" id="menuClear">נקה תפריט</button>
+    </div>
+    <div id="menuGrid"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>המאגרים</h3><div class="scale">12 · 9 · 9 · 10</div></div>
+    <details class="weeklist"><summary>12 מנות עיקריות</summary><div id="libDishes"></div></details>
+    <details class="weeklist"><summary>9 ארוחות בוקר</summary><div id="libB"></div></details>
+    <details class="weeklist"><summary>9 ארוחות ביניים</summary><div id="libS"></div></details>
+    <details class="weeklist"><summary>10 ארוחות ערב מהירות</summary><div id="libQ"></div></details>
+  </div>
+</section>
+
+<!-- ============ מטרות וסיכום ============ -->
+<section class="page" id="page-goals">
+  <div class="panel">
+    <div class="dv-head"><h3>מטרות השבוע</h3><div class="scale" id="goalsCount">—</div></div>
+    <div class="addgoal">
+      <input type="text" id="goalInput" placeholder="לדוגמה: לסיים את פרק 4 ולעבור על השאלות">
+      <button class="btn" id="addGoal">הוסף</button>
+    </div>
+    <div class="goals" id="goalsList"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>מטרות לטווח ארוך</h3><div class="scale" id="lgCount">—</div></div>
+    <p class="hint">אלה נשארות גם אחרי סגירת שבוע — יעדים של חודשים, לא של ימים.</p>
+    <div class="addgoal">
+      <input type="text" id="lgInput" placeholder="לדוגמה: לסיים את הקורס עד סוף השנה">
+      <button class="btn" id="addLg">הוסף</button>
+    </div>
+    <div class="goals" id="lgList"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>סיכום השבוע</h3><div class="scale">לא סופרים רק בלוקים</div></div>
+    <div class="crits" id="critsList"></div>
+    <div class="verdict" id="verdict"></div>
+    <div class="actions">
+      <button class="ghost" id="closeWeek">סגור שבוע ושמור בהיסטוריה</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>מגמה</h3><div class="scale" id="trendNote">—</div></div>
+    <svg class="chart" id="trendChart" viewBox="0 0 600 170" preserveAspectRatio="none"></svg>
+    <div class="chartlegend">
+      <div>▉ בלוקים בשבוע</div><div>● קריטריונים שסומנו</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>היסטוריה</h3><div class="scale" id="histCount">—</div></div>
+    <div class="hist" id="histList"></div>
+  </div>
+
+</section>
+
+<!-- ============ כלים ============ -->
+<section class="page" id="page-tools">
+  <div class="panel backup">
+    <div class="dv-head"><h3>גיבוי</h3><div class="scale">שמור לפני שמשהו נמחק</div></div>
+    <p class="hint">הנתונים שמורים רק בדפדפן הזה. ייצוא שומר הכול לקובץ, ייבוא מחזיר אותו.</p>
+    <div class="actions">
+      <button class="btn" id="expBtn">ייצא קובץ גיבוי</button>
+      <button class="btn sec" id="impBtn">ייבא קובץ</button>
+      <button class="ghost" id="showJson">הצג טקסט להעתקה</button>
+      <input type="file" id="impFile" accept="application/json" hidden>
+    </div>
+    <div id="undoWrap"></div>
+    <div id="jsonWrap" hidden><textarea id="jsonBox" readonly></textarea></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>תבניות יום</h3><div class="scale" id="dtCount">—</div></div>
+    <div id="dayTplList"></div>
+    <div class="actions">
+      <button class="btn" id="newDayTpl">צור תבנית יום</button>
+    </div>
+    <div id="dayTplEditor"></div>
+  </div>
+
+  <div class="panel">
+    <div class="dv-head"><h3>תבניות ערב</h3><div class="scale" id="etCount">—</div></div>
+    <div id="eveTplList"></div>
+    <div class="actions">
+      <button class="btn" id="newEveTpl">צור תבנית ערב</button>
+    </div>
+    <div id="eveTplEditor"></div>
+  </div>
+</section>
+
+<footer>הכול נשמר אוטומטית בדפדפן הזה. מומלץ לייצא גיבוי מדי פעם.</footer>
+</div>
+
+<nav class="nav" id="nav">
+  <button data-tab="today" class="on"><span class="ic">☀</span>היום</button>
+  <button data-tab="plan"><span class="ic">▦</span>שבוע</button>
+  <button data-tab="course"><span class="ic">✦</span>קורס</button>
+  <button data-tab="more"><span class="ic">⋯</span>עוד</button>
+</nav>
+
+<div id="printarea"></div>
+<script>
+/* ============ תבניות בסיס ============ */
+const MORNING = [
+  ["05:25","מודה אני, מקלחת ומי פה","personal"],
+  ["05:40","צחצוח שיניים","personal"],
+  ["05:45","הכנת חביתה בפיתה והתארגנות","meal"],
+  ["06:10","נסיעה לעבודה","work"],
+  ["06:30","נס קפה והפסקה","personal"],
+  ["06:45","קבלת משמרת ותדריך בוקר","work"],
+  ["07:00","תפילת שחרית","prayer"],
+  ["07:45","שליחת דוח פתיחות בוקר","work"],
+  ["08:00","סיור בוקר ובדיקת יומן המשמרת","work"],
+  ["08:15","הפסקה וקפיצה ללובי לצוות","personal"]
+].map(([t,what,tone])=>({t,what,tone}));
+
+const CORE = [
+  ["08:30","block","חומר חדש — קריאה והבנה"],
+  ["09:15","ארוחת בוקר","meal"],
+  ["09:30","block","המשך החומר המרכזי"],
+  ["10:15","הפסקה וביקור בלובי","personal"],
+  ["10:30","block","המשך החומר המרכזי"],
+  ["11:15","זמן לעצמך","personal"],
+  ["11:30","block","המשך החומר המרכזי"],
+  ["12:15","ארוחת צהריים ולובי","meal"],
+  ["13:00","block","תרגול ושאלות"],
+  ["13:45","הפסקה","personal"],
+  ["14:00","block","תרגול ושאלות"],
+  ["14:45","קבלת משמרת צהריים","work"],
+  ["15:15","block","חזרה ובדיקת הבנה"]
+].map(r => r[1]==="block"
+  ? {t:r[0], block:true, focus:r[2], tone:"study"}
+  : {t:r[0], what:r[1], tone:r[2]});
+
+const EXTENSION = [
+  ["16:00","ארוחת ביניים","meal"],
+  ["16:15","block","חזרה והטמעה"],
+  ["17:00","הפסקה וביקור בלובי","personal"],
+  ["17:15","block","שאלות ותיקון טעויות"],
+  ["18:00","זמן לעצמך","personal"],
+  ["18:15","block","סגירת קצוות — בלי נושא כבד חדש"]
+].map(r => r[1]==="block"
+  ? {t:r[0], block:true, focus:r[2], tone:"study"}
+  : {t:r[0], what:r[1], tone:r[2]});
+
+const BUILTIN_DAYS = {
+  work19:{ name:"עבודה עד 19:00", ends:"19:00", target:6,
+    rows:[...MORNING, ...CORE, ...EXTENSION] },
+  work16:{ name:"עבודה עד 16:00", ends:"16:00", target:6,
+    rows:[...MORNING, ...CORE] },
+  friday_work:{ name:"שישי — עבודה עד 15:00", ends:"15:00", target:4,
+    rows:[...MORNING, ...CORE.slice(0,11), {t:"14:45",what:"סגירת משמרת ומסירה",tone:"work"}] },
+  work16_nostudy:{ name:"עבודה עד 16:00 — בלי לימודים", ends:"16:00", target:0,
+    rows:[...MORNING,
+      {t:"08:30",what:"עבודה שוטפת ומשימות המשמרת",tone:"work"},
+      {t:"12:15",what:"ארוחת צהריים ולובי",tone:"meal"},
+      {t:"13:00",what:"המשך עבודה שוטפת",tone:"work"},
+      {t:"14:45",what:"קבלת משמרת צהריים",tone:"work"}] },
+  friday_home:{ name:"שישי — ניקיון יסודי", ends:"12:30", target:0, rows:[
+    {t:"08:00",what:"השכמה",tone:"personal"},
+    {t:"08:15",what:"מקלחת והתארגנות",tone:"personal"},
+    {t:"08:45",what:"ארוחת בוקר וקפה",tone:"meal"},
+    {t:"09:15",what:"מטבח — כלים, משטחים ומקרר",tone:"personal"},
+    {t:"10:15",what:"מקלחת ושירותים לעומק",tone:"personal"},
+    {t:"11:00",what:"חדרים, אבק ושטיפת רצפות",tone:"personal"},
+    {t:"11:45",what:"חצר וטאטוא",tone:"personal"},
+    {t:"12:15",what:"אשפה וסיבוב אחרון",tone:"personal"}
+  ]},
+  special:{ name:"יום חריג — בלי לימודים", ends:"17:00", target:0, rows:[
+    {t:"05:25",what:"השכמה, מקלחת והתארגנות",tone:"personal"},
+    {t:"06:15",what:"ארוחת בוקר ונסיעה",tone:"meal"},
+    {t:"08:00",what:"פעילות מלאה — אימון או הכשרה",tone:"work"},
+    {t:"12:00",what:"הפסקת צהריים",tone:"meal"},
+    {t:"12:45",what:"המשך הפעילות עד 17:00",tone:"work"}
+  ]},
+  shabbat:{ name:"שבת אצל ההורים", ends:"20:00", target:0, rows:[
+    {t:null, timeText:"עד צאת השבת", what:"שבת בבית ההורים", tone:"prayer"}
+  ]},
+  off:{ name:"יום חופש", ends:"16:00", target:0, rows:[
+    {t:"07:30",what:"השכמה חופשית",tone:"personal"},
+    {t:"08:30",what:"ארוחת בוקר",tone:"meal"},
+    {t:"09:30",what:"יום פנוי — נקבע לפי הצורך",tone:"none"}
+  ]},
+  none:{ name:"ללא תבנית", ends:"16:00", target:0, rows:[] }
+};
+
+const BUILTIN_EVES = {
+  fitness:{ name:"כושר ומנוחה", items:[
+    ["נסיעה לדירה",30,"work"],["כושר",30,"personal"],
+    ["מקלחת והתארגנות",30,"personal"],["ארוחת ערב",15,"meal"],
+    ["צחצוח שיניים והתארגנות",15,"personal"],
+    ["מיטה בלי פלאפון וצליל מרגיע",60,"sleep"]
+  ]},
+  home:{ name:"בית וניקיון קל", items:[
+    ["נסיעה לדירה",30,"work"],["מנוחה",30,"personal"],
+    ["כושר",30,"personal"],["מקלחת",30,"personal"],["ארוחת ביניים",15,"meal"],
+    ["ניקיון קל — חצר, פינת ישיבה, סמרטוט, מקלחת ומטבח",60,"personal"],
+    ["הכנות מראש לסוף השבוע",30,"personal"],["זמן פנוי לעצמך",75,"personal"],
+    ["צחצוח שיניים והתארגנות",15,"personal"],["מיטה בלי פלאפון",45,"sleep"]
+  ]},
+  cook:{ name:"קניות ובישול", items:[
+    ["נסיעה לדירה",30,"work"],["קניות",60,"meal"],
+    ["בישול לימים הקרובים",75,"meal"],["ניקיון מטבח",20,"personal"],
+    ["כושר",30,"personal"],["מקלחת",30,"personal"],["ארוחת ערב",20,"meal"],
+    ["זמן פנוי לעצמך",35,"personal"],["צחצוח שיניים והתארגנות",15,"personal"],
+    ["מיטה בלי פלאפון",45,"sleep"]
+  ]},
+  errands:{ name:"יום סידורים", items:[
+    ["סידורים ומשימות בחוץ",180,"work"],["נסיעה לדירה",20,"work"],
+    ["מקלחת",30,"personal"],["ארוחת ערב",20,"meal"],["זמן פנוי לעצמך",50,"personal"],
+    ["צחצוח שיניים והתארגנות",15,"personal"],["מיטה בלי פלאפון",45,"sleep"]
+  ]},
+  social:{ name:"ערב חברתי", items:[
+    ["נסיעה לדירה",30,"work"],["מקלחת קצרה והחלפת בגדים",15,"personal"],
+    ["סידור אחרון לפני האורחים",15,"personal"],
+    ["מפגש חברתי — שעת סיום גמישה",330,"personal"]
+  ]},
+  recovery:{ name:"התאוששות", items:[
+    ["נסיעה לדירה",30,"work"],["ארוחת ערב",30,"meal"],["מקלחת",30,"personal"],
+    ["מנוחה",60,"personal"],["זמן פנוי לעצמך",90,"personal"],
+    ["צחצוח שיניים והתארגנות",15,"personal"],["מיטה בלי פלאפון",45,"sleep"]
+  ]},
+  shabbat_eve:{ name:"כניסת שבת אצל ההורים", items:[
+    ["זמן חופשי בדירה",null,"personal","מסיום היום"],
+    ["נסיעה לבית ההורים והכנות",null,"work","לפני כניסת שבת"],
+    ["שבת אצל ההורים",null,"prayer","מכניסת שבת"]
+  ]},
+  motzash:{ name:'מוצ"ש — בישול לשבוע', items:[
+    ["נסיעה מבית ההורים לדירה",30,"work"],["בישול לראשון, שני ושלישי",90,"meal"],
+    ["ניקיון מטבח",30,"personal"],["גילוח ראש ומקלחת",30,"personal"],
+    ["התארגנות לשינה",15,"personal"],["מיטה בלי פלאפון",30,"sleep"]
+  ]},
+  none:{ name:"ערב פתוח", items:[] }
+};
+
+const DAYS = ["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
+const TONES = [["study","לימודים"],["work","עבודה"],["prayer","תפילה"],
+  ["meal","ארוחה"],["personal","אישי"],["sleep","שינה"],["none","אחר"]];
+const TONE_HEX = {study:"#2FA394", work:"#C6892F", prayer:"#7A69CE",
+  meal:"#4F9E63", personal:"#CD6E92", sleep:"#5A83BE", none:"#A8B2C4"};
+
+const CRITERIA = [
+  ["study","לימודים","התקדמת בחומר, לא רק ישבת מולו"],
+  ["work","עבודה","מילאת את התפקיד ולא נתת ללימודים להפריע"],
+  ["sleep","שינה","שמרת פחות או יותר על 22:00–05:25"],
+  ["body","גוף ובית","עשית כושר ושמרת על הסדר בדירה"],
+  ["life","חיים אישיים","היה זמן לנוח, לחברים ולעצמך"],
+  ["food","בישולים ותזונה","בישלת מראש ואכלת לפחות 4 ארוחות ביום — בוקר, צהריים, ביניים וערב"]
+];
+
+const QUOTES = [
+  ["לימודים","לא עליך המלאכה לגמור, ולא אתה בן חורין להיבטל ממנה","פרקי אבות"],
+  ["לימודים","איזהו חכם? הלומד מכל אדם","פרקי אבות"],
+  ["לימודים","יגעת ומצאת — תאמין","מסכת מגילה"],
+  ["לימודים","לפום צערא אגרא","פרקי אבות"],
+  ["לימודים","עדיף מעט בריכוז מלא, מהרבה בחצי ראש",""],
+  ["לימודים","שעה אחת של הבנה שווה יותר מיום של דפדוף",""],
+  ["לימודים","החומר לא בורח. רק הרצף חשוב",""],
+  ["אמונה","גם כי אלך בגיא צלמות לא אירא רע","תהילים כג"],
+  ["אמונה","ה' עוז לעמו ייתן, ה' יברך את עמו בשלום","תהילים כט"],
+  ["אמונה","קווה אל ה', חזק ויאמץ לבך","תהילים כז"],
+  ["אמונה","כל העולם כולו גשר צר מאוד, והעיקר לא לפחד כלל","רבי נחמן מברסלב"],
+  ["אמונה","עשה לך רב וקנה לך חבר","פרקי אבות"],
+  ["הצלחה","שבע ייפול צדיק וקם","משלי כד"],
+  ["הצלחה","ההצלחה נמדדת בכמה פעמים חזרת, לא בכמה פעמים נפלת",""],
+  ["הצלחה","עקביות מנצחת התפרצות. תמיד",""],
+  ["הצלחה","מי שמחזיק שנה בקצב בינוני, עובר את מי שבער שבוע",""],
+  ["הצלחה","יום שבו עמדת ביעד הוא יום מנצח. גם אם היה אפשר יותר",""],
+  ["חיים","איזהו עשיר? השמח בחלקו","פרקי אבות"],
+  ["חיים","שינה טובה היא חלק מהעבודה, לא הפסקה ממנה",""],
+  ["חיים","לא למלא את היום — לשלוט בו",""],
+  ["חיים","גם ליום מנוחה יש תפקיד בתוכנית",""],
+  ["חיים","הלוז נועד לשרת אותך, לא לשפוט אותך",""],
+  ["חיים","מה שאתה עושה כל יום חזק ממה שאתה עושה פעם אחת",""]
+];
+
+/* ============ מאגרי האוכל ============ */
+const MEAL_SLOTS = [["b","ארוחת בוקר","08:00"],["l","ארוחת צהריים","12:00"],
+                    ["s","ארוחת ביניים","16:00"],["d","ארוחת ערב","20:00"]];
+
+const DISHES = [
+  {id:"d1", name:"שניצל + פסטה ברוטב עגבניות", servings:6, min:45,
+   lunch:"שניצל + פסטה", dinner:"פסטה + תוספת קלה", freeze:"חזה עוף / שניצלים",
+   items:["חזה עוף כ־900 גרם","פסטה 500 גרם","עגבניות מרוסקות 700–800 גרם","בצל","שום","ביצים","פירורי לחם"]},
+  {id:"d2", name:"קציצות בקר ברוטב + אורז", servings:6, min:55,
+   lunch:"קציצות + אורז", dinner:"קציצות + סלט", freeze:"בשר טחון 800–900 גרם",
+   items:["בשר טחון 800–900 גרם","אורז 2 כוסות","עגבניות מרוסקות","ביצה","בצל","שום","פירורי לחם","פטרוזיליה"]},
+  {id:"d3", name:"פרגיות + אורז", servings:6, min:40,
+   lunch:"פרגיות + אורז", dinner:"פרגיות בפיתה + סלט", freeze:"פרגיות כ־1 ק\"ג",
+   items:["פרגיות 1 ק\"ג","אורז 2 כוסות","בצל","שום","פפריקה"]},
+  {id:"d4", name:"חזה עוף + תפוחי אדמה", servings:6, min:50,
+   lunch:"עוף + תפוחי אדמה", dinner:"עוף + סלט", freeze:"חזה עוף כ־1 ק\"ג",
+   items:["חזה עוף 1 ק\"ג","תפוחי אדמה 1.2–1.5 ק\"ג","בצל","שמן","תבלינים"]},
+  {id:"d5", name:"עוף בתנור + תפו״א וירקות", servings:6, min:70,
+   lunch:"עוף + תפוחי אדמה", dinner:"עוף + סלט", freeze:"כרעיים 1.5–1.8 ק\"ג",
+   items:["כרעיים/שוקיים 1.5–1.8 ק\"ג","תפוחי אדמה 1.5 ק\"ג","בצל","גזר","תבלינים"]},
+  {id:"d6", name:"פסטה בולונז", servings:6, min:45,
+   lunch:"בולונז + פסטה", dinner:"בולונז בקערה קטנה", freeze:"בשר טחון 750–800 גרם",
+   items:["בשר טחון 750–800 גרם","פסטה 500 גרם","עגבניות מרוסקות כ־800 גרם","בצל","שום"]},
+  {id:"d7", name:"מוקפץ עוף וירקות + אורז", servings:6, min:45,
+   lunch:"מוקפץ + אורז", dinner:"מוקפץ בפיתה", freeze:"עוף/פרגיות כ־900 גרם",
+   items:["עוף או פרגיות 900 גרם","אורז 2 כוסות","פלפלים","גזר","בצל","סויה","שום"]},
+  {id:"d8", name:"קבב בתנור + אורז או פתיתים", servings:6, min:50,
+   lunch:"קבב + תוספת", dinner:"קבב בפיתה + סלט", freeze:"בשר טחון כ־900 גרם",
+   items:["בשר טחון 900 גרם","בצל","פטרוזיליה","אורז או פתיתים","תבלינים"]},
+  {id:"d9", name:"רצועות חזה עוף ברוטב + אורז", servings:6, min:45,
+   lunch:"עוף ברוטב + אורז", dinner:"עוף ברוטב בפיתה", freeze:"חזה עוף 1 ק\"ג",
+   items:["חזה עוף 1 ק\"ג","אורז 2 כוסות","עגבניות מרוסקות 700–800 גרם","בצל","שום"]},
+  {id:"d10", name:"קציצות עוף/הודו + קוסקוס", servings:6, min:50,
+   lunch:"קציצות + קוסקוס", dinner:"קציצות + סלט", freeze:"עוף/הודו טחון 900 גרם",
+   items:["עוף או הודו טחון 900 גרם","קוסקוס 400–500 גרם","ביצה","בצל","פירורי לחם","רוטב עגבניות"]},
+  {id:"d11", name:"שווארמה ביתית מפרגיות", servings:6, min:40,
+   lunch:"שווארמה + אורז", dinner:"שווארמה בפיתה + סלט", freeze:"פרגיות 1 ק\"ג",
+   items:["פרגיות 1 ק\"ג","2 בצלים","תבלין שווארמה","פפריקה","כמון","אורז 2 כוסות"]},
+  {id:"d12", name:"עוף עם אפונה וגזר ברוטב + אורז", servings:6, min:50,
+   lunch:"עוף ברוטב + אורז", dinner:"עוף ברוטב + פיתה", freeze:"עוף 1 ק\"ג",
+   items:["עוף 1 ק\"ג","אפונה וגזר 500–600 גרם","אורז 2 כוסות","בצל","עגבניות מרוסקות","שום"]}
+];
+
+const BREAKFASTS = [
+  {id:"b1", name:"חביתה בפיתה", min:"10–15"},
+  {id:"b2", name:"סלמון בפיתה", min:"12–18"},
+  {id:"b3", name:"טונה בפיתה", min:"5–7"},
+  {id:"b4", name:"ביצים קשות + פיתה וירקות", min:"3–15"},
+  {id:"b5", name:"קוטג׳ בפיתה + ירקות", min:"5"},
+  {id:"b6", name:"חביתה + גבינה בפיתה", min:"10–12"},
+  {id:"b7", name:"טוסט פיתה עם טונה וגבינה", min:"8–10"},
+  {id:"b8", name:"שקשוקה מהירה + פיתה", min:"15–20"},
+  {id:"b9", name:"חביתה + טונה בפיתה", min:"10–12"}
+];
+
+const SNACKS = [
+  {id:"s1", name:"סלט + 2 ביצים קשות", min:"5–8"},
+  {id:"s2", name:"סלט + טונה", min:"5"},
+  {id:"s3", name:"סלט + קוטג׳", min:"5"},
+  {id:"s4", name:"סלט + גבינה בולגרית", min:"5"},
+  {id:"s5", name:"סלט + ביצה + פרי", min:"6"},
+  {id:"s6", name:"טונה בפיתה קטנה + ירקות", min:"5"},
+  {id:"s7", name:"2 ביצים + ירקות + חצי פיתה", min:"3–5"},
+  {id:"s8", name:"קוטג׳ + ירקות + פרי", min:"3"},
+  {id:"s9", name:"סלט + שאריות חלבון מהבישול", min:"5"}
+];
+
+const QUICK = [
+  {id:"q1", name:"חביתה + סלט + פיתה", min:"10–12"},
+  {id:"q2", name:"טונה בפיתה + ירקות", min:"5"},
+  {id:"q3", name:"טוסט גבינה + סלט", min:"7–10"},
+  {id:"q4", name:"קוטג׳ + ביצים + ירקות", min:"5"},
+  {id:"q5", name:"שקשוקה מהירה", min:"15"},
+  {id:"q6", name:"סלמון במחבת + סלט", min:"12–15"},
+  {id:"q7", name:"ביצים + גבינה + ירקות", min:"3–5"},
+  {id:"q8", name:"פיתה עם שאריות מהבישול", min:"5–7"},
+  {id:"q9", name:"סלט גדול + חלבון", min:"8"},
+  {id:"q10", name:"ארוחת מזווה — טונה, פיתה, ירקות", min:"5"}
+];
+
+const DEFAULT_WEEK = [
+  {day:"work19", eve:"fitness"},
+  {day:"work19", eve:"fitness"},
+  {day:"work16", eve:"cook"},
+  {day:"work16", eve:"errands"},
+  {day:"work16", eve:"social"},
+  {day:"friday_work", eve:"shabbat_eve"},
+  {day:"shabbat", eve:"motzash"}
+];
+
+/* ============ מצב ============ */
+let week    = DEFAULT_WEEK.map(d=>({...d}));
+let done    = {};
+let notes   = {};
+let review  = {};
+let goals   = [];
+let longGoals = [];
+let history = [];
+let customDays = {};
+let overrides = {};   /* התאמות ליום בודד, לפי תאריך */
+let course = { name:"יועץ כלכלי", total:16, first:3, deadline:"2026-10-15",
+               minPerPage:4, verbalPct:50, qMinutes:75, qCount:15, reviewBlock:false, pagesPerBlock:20 };
+let lessons = {};          /* "3": {title, pages, read, verbal, qDone, qWrong} */
+let focus = { lesson:3, stage:"study" };
+let weekPlan = {};         /* תאריך תחילת שבוע -> [3,4] */
+let blockLink = {};        /* "תאריך:מספר בלוק" -> {lesson, stage} */
+let errorsBank = [];       /* {lesson, text, done} */
+let assign = {};           /* "תאריך:בלוק" -> {lesson, stage, a, b, idx, of} */
+let cookPlan = {};         /* תאריך תחילת שבוע -> {sat:dishId, tue:dishId} */
+let menu = {};             /* "תאריך:slot" -> מזהה ארוחה */
+let unassigned = [];       /* פריטים שלא נכנסו לשבוע */
+let noStudy = ["2026-09-11","2026-09-12","2026-09-13","2026-09-20","2026-09-21",
+               "2026-09-25","2026-09-26","2026-10-03"];   /* חגי תשרי */
+const STAGES = [["study","קריאה והשמעה"],["quest","15 שאלות"],
+                ["recall","עמוד סיכום מהזיכרון"]];
+let customEves = {};
+let weekStart = defaultWeekStart();
+let selected  = new Date().getDay();
+let ovDay     = new Date().getDay();
+let dayOpen   = false;
+let tab       = "today";
+let subTab    = "goals";
+let planMode  = "day";
+let lastQuote = -1;
+let editDay   = null;   /* טיוטת עריכת תבנית יום */
+let editEve   = null;
+let editOv    = null;   /* עריכת יום בודד */
+
+/* ============ עזרים ============ */
+const toMin = t => (+t.slice(0,2))*60 + (+t.slice(3));
+const toStr = m => String(Math.floor(m/60)%24).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+const dkey = i => addDays(weekStart, i);
+const doneOf = i => done[dkey(i)] || [];
+const setDone = (i, arr) => { done[dkey(i)] = arr; };
+const nkey = (i, num) => dkey(i)+":"+num;
+const noteOf = (i, num) => notes[nkey(i,num)] || "";
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
+const numT = t => (/^\d/.test(t||"") ? "num" : "");
+
+function iso(d){
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function sundayOf(d){
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setDate(x.getDate() - x.getDay());
+  return iso(x);
+}
+function addDays(isoStr, n){
+  const p = isoStr.split("-").map(Number);
+  const d = new Date(p[0], p[1]-1, p[2]);
+  d.setDate(d.getDate()+n);
+  return iso(d);
+}
+function defaultWeekStart(){
+  /* תמיד השבוע שמכיל את היום — כדי שהתאריכים באפליקציה יהיו התאריכים האמיתיים */
+  return sundayOf(new Date());
+}
+function todayInWeek(){
+  const t = iso(new Date());
+  for(let i=0;i<7;i++) if(addDays(weekStart,i) === t) return true;
+  return false;
+}
+function short(isoStr){ const p = isoStr.split("-"); return (+p[2])+"/"+(+p[1]); }
+const rangeText = s => short(s)+"–"+short(addDays(s,6));
+const todayISO = () => iso(new Date());
+const nowMin = () => { const d=new Date(); return d.getHours()*60+d.getMinutes(); };
+
+function dayTpl(k){ return customDays[k] || BUILTIN_DAYS[k] || BUILTIN_DAYS.none; }
+function dayTplAt(i){ return overrides[dkey(i)] || dayTpl((week[i]||{}).day); }
+const hasOverride = i => !!overrides[dkey(i)];
+function eveTpl(k){ return customEves[k] || BUILTIN_EVES[k] || BUILTIN_EVES.none; }
+function allDays(){ return Object.assign({}, BUILTIN_DAYS, customDays); }
+function allEves(){ return Object.assign({}, BUILTIN_EVES, customEves); }
+const blocksOf = tpl => tpl.rows.filter(r=>r.block).length;
+
+function dayWord(n, target){
+  if(n === 0) return ["עוד לא התחלת","הבלוק הראשון הוא ההתחלה"];
+  if(n < 4)   return ["התחלת","כל בלוק נספר, גם ביום עמוס"];
+  if(n < target) return ["יום עמוס — ושמרת על הלימודים","זה עדיין יום מוצלח"];
+  if(n === target) return ["עמדת ביעד","זה כל מה שהיום הזה צריך"];
+  if(n <= target+2) return ["יום חזק מאוד","מעבר ליעד"];
+  return ["יום יוצא דופן","בונוס, לא סטנדרט חדש"];
+}
+function weekVerdict(k){
+  const n = CRITERIA.length;
+  if(k === 0) return ["עדיין לא סיכמת","סמן את מה שהתקיים השבוע"];
+  if(k <= Math.floor(n/3)) return ["שבוע קשה","שווה לבדוק מה גזל את הזמן — לא להוסיף עוד עומס"];
+  if(k < n-1) return ["שבוע סביר","משהו אחד או שניים נדחקו הצידה, וזה קורה"];
+  return ["שבוע מוצלח",`${n-1} או ${n} מתוך ה${n===6?"שישה":"חמישה"} — זה הרף`];
+}
+
+/* ============ קורס ============ */
+function lsn(n){
+  const k = String(n);
+  if(!lessons[k]) lessons[k] = {title:"", pages:90, read:0, verbal:false,
+                                qDone:0, qWrong:0, recall:false};
+  const l = lessons[k];
+  if(!l.pages) l.pages = 90;
+  return l;
+}
+const stageDone = (n, st) => {
+  const l = lsn(n);
+  if(st === "study") return l.read >= l.pages;
+  if(st === "recall") return !!l.recall;
+  return l.qDone >= course.qCount;
+};
+const lessonDone = n => STAGES.every(([st]) => stageDone(n, st));
+function lessonPct(n){
+  const l = lsn(n);
+  const r = Math.min(1, l.pages ? l.read/l.pages : 0);
+  const q = Math.min(1, course.qCount ? l.qDone/course.qCount : 0);
+  return (r + q + (l.recall?1:0)) / 3;
+}
+function lessonBlocks(n){
+  const l = lsn(n);
+  const ppb = Math.max(1, course.pagesPerBlock || 20);
+  const studyB = Math.ceil(l.pages / ppb);             /* קריאה + השמעה באותו בלוק */
+  const questB = Math.max(1, Math.ceil(course.qMinutes/45));
+  return studyB + questB + 1;                          /* + עמוד סיכום מהזיכרון */
+}
+function lessonList(){
+  const out = [];
+  for(let n = course.first; n <= course.total; n++) out.push(n);
+  return out;
+}
+const completedLessons = () => lessonList().filter(lessonDone).length;
+const remainingLessons = () => lessonList().length - completedLessons();
+
+function isStudyDay(dateISO, i){
+  if(noStudy.indexOf(dateISO) > -1) return false;
+  const d = new Date(dateISO+"T12:00:00");
+  if(d.getDay() === 6) return false;              /* שבת */
+  return true;
+}
+/* בלוקים זמינים בשבוע נתון, בלי שבתות וחגים */
+function availableBlocks(startISO){
+  let sum = 0;
+  for(let i=0;i<7;i++){
+    const d = addDays(startISO,i);
+    if(!isStudyDay(d,i)) continue;
+    const tpl = (startISO === weekStart) ? dayTplAt(i) : dayTpl((week[i]||{}).day);
+    sum += tpl.target;
+  }
+  return sum;
+}
+function weeksLeft(){
+  if(!course.deadline) return 0;
+  const end = new Date(course.deadline+"T12:00:00");
+  const start = new Date(weekStart+"T12:00:00");
+  return Math.max(1, Math.ceil((end - start)/(7*24*3600*1000)));
+}
+function paceInfo(){
+  const rem = remainingLessons(), wl = weeksLeft();
+  const need = rem / wl;
+  const planned = 2;                                     /* הקצב שנקבע */
+  /* היתכנות אמיתית: בלוקים דרושים מול בלוקים זמינים עד היעד */
+  const needBlocks = lessonList().filter(n=>!lessonDone(n))
+                                 .reduce((a,n)=>a+lessonBlocks(n), 0);
+  let haveBlocks = 0;
+  for(let k=0;k<wl;k++) haveBlocks += availableBlocks(addDays(weekStart, k*7));
+  return {rem, wl, need, planned, needBlocks, haveBlocks,
+          late: need > planned + 0.15 || needBlocks > haveBlocks};
+}
+const planOf = () => weekPlan[weekStart] || [];
+
+/* תור הפריטים של השבוע — לפי הסדר: קריאה, השמעה, שאלות, ואז השיעור הבא */
+function weekQueue(){
+  const q = [];
+  planOf().forEach(n=>{
+    const l = lsn(n);
+    const ppb = Math.max(1, course.pagesPerBlock || 20);
+    const sb = Math.max(1, Math.ceil(l.pages/ppb));
+    for(let k=0;k<sb;k++){
+      const a = k*ppb+1, b = Math.min(l.pages, (k+1)*ppb);
+      if(a <= l.pages) q.push({lesson:n, stage:"study", a, b});
+    }
+    const qb = Math.max(1, Math.ceil(course.qMinutes/45));
+    const qper = Math.ceil(course.qCount/qb);
+    for(let k=0;k<qb;k++){
+      const a = k*qper+1, b = Math.min(course.qCount, (k+1)*qper);
+      if(a <= course.qCount) q.push({lesson:n, stage:"quest", a, b});
+    }
+    q.push({lesson:n, stage:"recall"});
+  });
+  return q;
+}
+const reviewDays = () => {
+  let c = 0;
+  for(let i=0;i<7;i++){
+    const dt = dayTplAt(i);
+    if(isStudyDay(dkey(i), i) && dt.target) c++;
+  }
+  return c;
+};
+function weekNeed(){
+  const lessonsBlocks = planOf().reduce((a,n)=>a+lessonBlocks(n), 0);
+  return {lessonsBlocks, rev:0, total: lessonsBlocks};
+}
+
+/* פריסה בפועל על הבלוקים של השבוע */
+function buildSchedule(){
+  const q = weekQueue();
+  const next = {};
+  for(let i=0;i<7;i++){
+    const d = dkey(i), dt = dayTplAt(i);
+    if(!isStudyDay(d,i) || !dt.target) continue;
+    const rows = buildDay(i).filter(r=>r.block).slice(0, dt.target);
+    rows.forEach(r=>{
+      if(!q.length) return;
+      let pick = 0;
+      /* אחרי 17:00 ביום ארוך — לא מתחילים חומר כבד חדש */
+      if(r.startM >= 1020){
+        const alt = q.findIndex(it => it.stage !== "study");
+        if(alt > -1) pick = alt;
+      }
+      next[d+":"+r.num] = q.splice(pick,1)[0];
+    });
+  }
+  /* שיבוצים של שבועות אחרים נשמרים */
+  Object.keys(assign).forEach(k=>{
+    const d = k.split(":")[0];
+    let inWeek = false;
+    for(let i=0;i<7;i++) if(dkey(i) === d) inWeek = true;
+    if(!inWeek) next[k] = assign[k];
+  });
+  assign = next;
+  unassigned = q;
+  save();
+}
+
+function assignLabel(dateISO, num){
+  const a = assign[dateISO+":"+num];
+  if(!a) return "";
+  if(a.stage === "review") return "חזרה — טעויות ושאלות מהיום הקודם";
+  if(a.stage === "study")  return `שיעור ${a.lesson} · קריאה והשמעה עמ׳ ${a.a} עד ${a.b}`;
+  if(a.stage === "quest")  return `שיעור ${a.lesson} · שאלות ${a.a} עד ${a.b}`;
+  return `שיעור ${a.lesson} · עמוד סיכום מהזיכרון`;
+}
+const itemLabel = it => it.stage === "study"
+  ? `שיעור ${it.lesson} · קריאה והשמעה עמ׳ ${it.a} עד ${it.b}`
+  : (it.stage === "quest" ? `שיעור ${it.lesson} · שאלות ${it.a} עד ${it.b}`
+                          : `שיעור ${it.lesson} · עמוד סיכום מהזיכרון`);
+
+/* ============ בניית יום ============ */
+function buildDay(i){
+  const cfg = week[i] || {day:"none", eve:"none"};
+  const dt = dayTplAt(i);
+  const rows = dt.rows.map(r=>({...r}));
+  let n = 0;
+  rows.forEach(r=>{ if(r.block){ n++; r.num = n; } });
+
+  let cur = toMin(dt.ends);
+  let openEnded = false;
+  eveTpl(cfg.eve).items.forEach(([what,mins,tone,timeText])=>{
+    if(mins === null){
+      rows.push({t:null, timeText:timeText||"", what, tone, dim:true});
+      openEnded = true; return;
+    }
+    if(openEnded) return;
+    rows.push({t:toStr(cur), what, tone, dim:true, mins});
+    cur += mins;
+  });
+  if(rows.length && !openEnded){
+    rows.push({t:toStr(cur), what:"שינה עד 05:25", tone:"sleep", dim:true, last:true});
+  }
+  rows.forEach((r,idx)=>{
+    const nx = rows[idx+1];
+    if(!r.t){ r.range = r.timeText; return; }
+    const nextT = nx ? (nx.t || dt.ends) : null;
+    r.range = r.t + (nextT ? "–"+nextT : "");
+    r.startM = toMin(r.t);
+    r.endM = nextT ? toMin(nextT) : toMin("05:25")+1440;
+    if(r.endM <= r.startM) r.endM += 1440;
+  });
+  return rows;
+}
+
+function totals(){
+  let target=0, max=0, marked=0;
+  week.forEach((c,i)=>{
+    const d = dayTplAt(i);
+    target += d.target; max += blocksOf(d); marked += doneOf(i).length;
+  });
+  return {target, max, marked};
+}
+
+/* ============ דף היום ============ */
+function todayIndex(){
+  const t = todayISO();
+  for(let i=0;i<7;i++) if(addDays(weekStart,i) === t) return {i, inWeek:true};
+  return {i:new Date().getDay(), inWeek:false};
+}
+
+function renderToday(){
+  const {i, inWeek} = todayIndex();
+  const cfg = week[i], dt = dayTplAt(i);
+  const rows = buildDay(i);
+  const now = nowMin();
+  const marks = doneOf(i);
+
+  const timed = rows.filter(r=>r.t);
+  let cur = timed.find(r=> now >= r.startM && now < r.endM);
+  if(!cur && timed.length && now < timed[0].startM) cur = null;
+  const idx = cur ? rows.indexOf(cur) : -1;
+  const nxt = idx >= 0 ? rows.slice(idx+1).find(r=>r.what || r.block) : timed[0];
+
+  const label = cur
+    ? (cur.block ? "בלוק "+cur.num : cur.what)
+    : (timed.length ? "היום עוד לא התחיל" : "אין לוז ליום הזה");
+  const sub = cur
+    ? (cur.block ? (noteOf(i,cur.num) || assignLabel(dkey(i), cur.num) || cur.focus) : cur.range)
+    : (timed.length ? "מתחיל ב־"+timed[0].t : "");
+  const left = cur ? Math.max(0, cur.endM - now) : 0;
+  const pct = cur ? Math.min(100, Math.round(((now - cur.startM)/(cur.endM - cur.startM))*100)) : 0;
+  const clock = toStr(now);
+
+  document.getElementById("nowCard").innerHTML = `
+    <div class="now-top">
+      <div class="now-day">${DAYS[i]}<i>${short(todayISO())}</i></div>
+      <div class="now-clock">${clock}</div>
+    </div>
+    ${inWeek ? "" : `<div class="warn">הלוז שמוצג כאן הוא של השבוע ${rangeText(weekStart)},
+      לפי יום ${DAYS[i]} שבו. <button class="ghost" id="jumpWeek">עבור לשבוע הנוכחי</button></div>`}
+    <div class="now-lbl">${cur ? "עכשיו" : "לפני תחילת היום"}</div>
+    <p class="now-what">${esc(label)}</p>
+    ${sub ? `<div class="now-sub">${esc(sub)}</div>` : ""}
+    ${cur ? `<div class="bar"><i style="width:${pct}%"></i></div>
+      <div class="now-sub">נשארו ${left} דקות · עד ${toStr(cur.endM%1440)}</div>` : ""}
+    ${cur && cur.block ? `
+      <button class="bigbtn ${marks.includes(cur.num)?"undo":""}" id="doneNow">
+        ${marks.includes(cur.num) ? "בוצע ✓ — לביטול" : "סיימתי את הבלוק"}</button>` : ""}
+    ${nxt ? `<div class="next"><span class="t">${nxt.t || nxt.timeText || ""}</span>
+      <b>הבא:</b> ${esc(nxt.block ? (assignLabel(dkey(i), nxt.num) || "בלוק "+nxt.num) : nxt.what)}</div>` : ""}`;
+
+  const dn = document.getElementById("doneNow");
+  if(dn) dn.addEventListener("click", ()=>{
+    const m = doneOf(i), on = m.includes(cur.num);
+    setDone(i, on ? m.filter(x=>x!==cur.num) : m.concat(cur.num).sort((a,b)=>a-b));
+    linkBlock(i, cur.num, !on);
+    renderAll(); save();
+  });
+
+  /* בלוקים ליום */
+  const blocks = rows.filter(r=>r.block);
+  const [word, wsub] = dayWord(marks.length, dt.target);
+  document.getElementById("todayBlocks").innerHTML = blocks.length ? `
+    <div class="dv-head">
+      <h3>בלוקים היום</h3>
+      <div class="scale">יעד <em>${dt.target}</em></div>
+    </div>
+    <div class="meter">
+      <div class="meter-top">
+        <div class="meter-count">${marks.length}</div>
+        <div><div class="meter-word">${word}</div><div class="meter-sub">${wsub}</div></div>
+      </div>
+      <div class="pips">${blocks.map((b,k)=>
+        `<div class="pip ${k<marks.length?"on":""} ${k+1===dt.target?"goal":""}"></div>`).join("")}</div>
+    </div>
+    <div class="chips">${blocks.map(b=>
+      `<button class="chip ${marks.includes(b.num)?"on":""} ${b.endM<=now?"past":""}"
+               data-tblock="${b.num}" title="${esc(assignLabel(dkey(i), b.num))}">
+         <b>${b.num}</b><small>${b.t}</small>${(()=>{
+           const a = assign[dkey(i)+":"+b.num];
+           if(!a) return "";
+           const m = {study:"לימוד", quest:"שאלות", recall:"סיכום"}[a.stage] || "";
+           return `<small>${m}</small>`;
+         })()}</button>`).join("")}</div>
+    <details class="focuswrap" id="focusWrap">
+      <summary>שיעור ${focus.lesson} · ${(STAGES.find(x=>x[0]===focus.stage)||["",""])[1]} — שינוי ידני</summary>
+      ${focusHTML()}
+    </details>
+    ${errorsBank.filter(e=>!e.done).length
+      ? `<p class="hint" style="margin:10px 0 0">${errorsBank.filter(e=>!e.done).length} שאלות פתוחות בבנק הטעויות.</p>`
+      : `<p class="hint" style="margin:10px 0 0">העבודה קודמת לבלוק. מה שלא יצא — לא נגרר למחר.</p>`}`
+    : `<div class="dv-head"><h3>בלוקים היום</h3></div>
+       <p class="empty">היום הזה בלי בלוקי לימוד. זה חלק מהתוכנית, לא חריגה ממנה.</p>`;
+
+  const jw = document.getElementById("jumpWeek");
+  if(jw) jw.addEventListener("click", ()=>{
+    weekStart = sundayOf(new Date());
+    selected = new Date().getDay();
+    renderAll(); save();
+  });
+
+  const fw = document.getElementById("focusWrap");
+  if(fw) bindFocus(fw);
+
+  document.querySelectorAll("[data-tblock]").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      const num = +b.dataset.tblock;
+      const m = doneOf(i);
+      const on = m.includes(num);
+      setDone(i, on ? m.filter(x=>x!==num) : m.concat(num).sort((a,b)=>a-b));
+      linkBlock(i, num, !on);
+      renderAll(); save();
+    });
+  });
+
+  /* ארוחות היום */
+  const anyMeal = MEAL_SLOTS.some(([slot])=>mealOf(i, slot));
+  document.getElementById("todayMeals").innerHTML = `
+    <div class="dv-head"><h3>ארוחות היום</h3>
+      <div class="scale">${cycleDish(i) ? esc(cycleDish(i).name) : "לא נבחרה מנה"}</div></div>
+    ${anyMeal ? `<div class="meals">${MEAL_SLOTS.map(([slot,label,time])=>{
+        const nm = mealLabel(i, slot);
+        const tm = toMin(time);
+        const isNow = now >= tm - 45 && now < tm + 90;
+        return `<div class="meal ${nm?"":"empty"} ${isNow?"now":""}">
+          <b>${time}</b><span>${nm ? esc(nm) : label + " — לא נקבע"}</span></div>`;
+      }).join("")}</div>`
+      : `<p class="empty">אפשר לקבוע את התפריט בעוד ← אוכל.</p>`}`;
+
+  /* מטרות פתוחות */
+  const open = goals.filter(g=>!g.done);
+  document.getElementById("todayGoals").innerHTML = `
+    <div class="dv-head"><h3>מטרות פתוחות השבוע</h3>
+      <div class="scale">${goals.length ? goals.filter(g=>g.done).length+" מתוך "+goals.length : "אין מטרות"}</div>
+    </div>
+    ${open.length
+      ? `<div class="goals">${open.map(g=>
+          `<div class="goal"><span class="tick"></span><span class="txt">${esc(g.text)}</span></div>`).join("")}</div>`
+      : `<p class="empty">${goals.length ? "כל המטרות סומנו. שבוע טוב." : "אפשר להגדיר מטרות בדף המטרות."}</p>`}`;
+}
+
+/* ============ דף לוז ============ */
+function renderDate(){
+  document.getElementById("wstart").value = weekStart;
+  document.getElementById("rangeTxt").textContent = rangeText(weekStart);
+}
+
+function renderWeek(){
+  const today = todayISO();
+  const banner = todayInWeek() ? "" :
+    `<div class="warn">השבוע שמוגדר כאן הוא ${rangeText(weekStart)} — היום (${short(today)}) לא נמצא בו.
+      <button class="ghost" id="jumpWeek2">עבור לשבוע הנוכחי</button></div>`;
+  document.getElementById("planBanner").innerHTML = banner;
+  const jb = document.getElementById("jumpWeek2");
+  if(jb) jb.addEventListener("click", ()=>{
+    weekStart = sundayOf(new Date());
+    selected = new Date().getDay();
+    renderAll(); save();
+  });
+
+  document.getElementById("planDays").innerHTML = DAYS.map((name,i)=>{
+    const d = addDays(weekStart,i);
+    return `<button class="ovpick ${i===selected?"on":""} ${d===today?"today":""}" data-pick="${i}">
+      <b>${name}</b><small>${short(d)}</small></button>`;
+  }).join("");
+
+  const i = selected, cfg = week[i], dt = dayTplAt(i), nb = blocksOf(dt);
+  document.getElementById("dayEditor").innerHTML = `
+    <div class="daycard active ${nb?"":"rest"}">
+      <div class="daycard-top">
+        <div class="dayname">${DAYS[i]}<i>${short(addDays(weekStart,i))}</i></div>
+        <div class="daymeta">${nb ? `יעד <em>${dt.target}</em> · סומנו ${doneOf(i).length}` : "ללא לימודים"}</div>
+      </div>
+      <div class="selects">
+        <label class="field"><span>תבנית יום</span>
+          <select data-i="${i}" data-k="day">
+            ${Object.entries(allDays()).map(([k,v])=>
+              `<option value="${k}" ${k===cfg.day?"selected":""}>${esc(v.name)}</option>`).join("")}
+          </select></label>
+        <label class="field"><span>תבנית ערב</span>
+          <select data-i="${i}" data-k="eve">
+            ${Object.entries(allEves()).map(([k,v])=>
+              `<option value="${k}" ${k===cfg.eve?"selected":""}>${esc(v.name)}</option>`).join("")}
+          </select></label>
+      </div>
+    </div>`;
+
+  document.getElementById("weekRows").innerHTML = week.map((c,k)=>{
+    const d = dayTplAt(k);
+    return `<button class="wrow ${k===selected?"on":""}" data-pick="${k}">
+      <b>${DAYS[k]}</b><i>${short(addDays(weekStart,k))}</i>
+      <span>${esc(d.name)} · ${esc(eveTpl(c.eve).name)}</span>
+      ${blocksOf(d) ? `<em>${doneOf(k).length}/${d.target}</em>` : ""}
+    </button>`;
+  }).join("");
+
+  document.querySelectorAll("[data-pick]").forEach(b=>{
+    b.addEventListener("click", ()=>{ selected = +b.dataset.pick; dayOpen = false; renderAll(); });
+  });
+  document.querySelectorAll("#dayEditor select").forEach(sel=>{
+    sel.addEventListener("change", e=>{
+      const idx = +e.target.dataset.i, k = e.target.dataset.k;
+      week[idx][k] = e.target.value;
+      if(k === "day"){
+        const mx = blocksOf(dayTplAt(idx));
+        setDone(idx, doneOf(idx).filter(n => n <= mx));
+      }
+      renderAll(); save();
+    });
+  });
+}
+
+function renderDay(){
+  const dv = document.getElementById("dayview");
+  const dt = dayTplAt(selected);
+  const rows = buildDay(selected);
+  const marks = doneOf(selected);
+  const n = marks.length;
+  const nb = blocksOf(dt);
+  const isToday = addDays(weekStart,selected) === todayISO();
+  const now = nowMin();
+
+  const scale = nb
+    ? `<div class="scale">יעד <em>${dt.target}</em> בלוקים · עד ${nb} אפשרי</div>`
+    : `<div class="scale">יום בלי בלוקי לימוד</div>`;
+
+  let meter = "";
+  if(nb){
+    const [word, sub] = dayWord(n, dt.target);
+    meter = `<div class="meter">
+      <div class="meter-top"><div class="meter-count">${n}</div>
+        <div><div class="meter-word">${word}</div><div class="meter-sub">${sub}</div></div></div>
+      <div class="pips">${Array.from({length:nb},(_,k)=>
+        `<div class="pip ${k<n?"on":""} ${k+1===dt.target?"goal":""}"></div>`).join("")}</div>
+    </div>`;
+  }
+
+  const body = rows.length ? `<div class="ribbon">${rows.map(r=>{
+    const isNow = isToday && r.t && now >= r.startM && now < r.endM;
+    return r.block
+      ? `<div class="row block ${marks.includes(r.num)?"done":""} ${isNow?"now":""}" style="--tone:var(--study)">
+           <div class="time ${numT(r.range)}">${r.range}</div>
+           <div class="what">
+             <span class="tick" role="checkbox" tabindex="0" aria-checked="${marks.includes(r.num)}"
+                   aria-label="סימון בלוק ${r.num}" data-block="${r.num}"></span>
+             <div class="blk"><span data-block="${r.num}">בלוק ${r.num}</span>
+               <input class="blk-note" data-note="${r.num}" placeholder="${esc(blockLabel(selected, r.num, r.focus))}"
+                      value="${esc(noteOf(selected,r.num))}"></div>
+           </div></div>`
+      : `<div class="row ${r.dim?"dim":""} ${isNow?"now":""}" style="--tone:var(--${r.tone})">
+           <div class="time ${numT(r.range)}">${r.range}</div>
+           <div class="what">${esc(r.what)}${(()=>{
+             const ml = rowMealLabel(selected, r);
+             return ml ? ` — <b style="font-weight:700">${esc(ml)}</b>` : "";
+           })()}</div>
+         </div>`;
+  }).join("")}</div>` : `<p class="empty">לא נבחרה תבנית ליום הזה.</p>`;
+
+  dv.innerHTML = `
+    <div class="dv-head">
+      <h3>יום ${DAYS[selected]} · ${short(addDays(weekStart,selected))}</h3>
+      ${scale}
+      ${n ? `<button class="ghost" id="clearDay">נקה סימונים</button>` : ""}
+      <button class="ghost" id="ovBtn">${hasOverride(selected) ? "ערוך התאמה" : "התאם יום זה"}</button>
+      ${hasOverride(selected) ? `<button class="ghost" id="ovDel">בטל התאמה</button>` : ""}
+    </div>
+    ${hasOverride(selected) ? `<div class="warn">ליום הזה יש התאמה אישית שגוברת על התבנית.</div>` : ""}
+    ${meter}
+    <button class="openday" id="toggleDay">${dayOpen ? "הסתר את הלוז" : "הצג את היום המלא"}</button>
+    ${dayOpen ? body : ""}
+    ${dayOpen ? `<div class="legend">
+      <div><i class="dot" style="background:var(--study)"></i>לימודים</div>
+      <div><i class="dot" style="background:var(--work)"></i>עבודה</div>
+      <div><i class="dot" style="background:var(--prayer)"></i>תפילה</div>
+      <div><i class="dot" style="background:var(--meal)"></i>ארוחות</div>
+      <div><i class="dot" style="background:var(--personal)"></i>אישי ומנוחה</div>
+      <div><i class="dot" style="background:var(--sleep)"></i>הורדת הילוך ושינה</div>
+    </div>` : ""}`;
+
+  dv.querySelectorAll("[data-block]").forEach(el=>{
+    const hit = () => toggleBlock(+el.dataset.block);
+    el.addEventListener("click", hit);
+    el.addEventListener("keydown", e=>{
+      if(e.key===" "||e.key==="Enter"){ e.preventDefault(); hit(); }
+    });
+  });
+  dv.querySelectorAll("[data-note]").forEach(inp=>{
+    inp.addEventListener("input", ()=>{
+      const key = nkey(selected, inp.dataset.note);
+      if(inp.value.trim()) notes[key] = inp.value; else delete notes[key];
+      save();
+    });
+  });
+  const clr = document.getElementById("clearDay");
+  if(clr) clr.addEventListener("click", ()=>{ setDone(selected, []); renderAll(); save(); });
+  document.getElementById("toggleDay").addEventListener("click", ()=>{ dayOpen = !dayOpen; renderDay(); });
+  document.getElementById("ovBtn").addEventListener("click", ()=>{
+    const src = dayTplAt(selected);
+    editOv = {date:dkey(selected), name:src.name, ends:src.ends, target:src.target,
+              rows:src.rows.map(r=>({...r}))};
+    renderOvEditor();
+    document.getElementById("ovEditor").scrollIntoView({behavior:"smooth",block:"start"});
+  });
+  const ovd = document.getElementById("ovDel");
+  if(ovd) ovd.addEventListener("click", ()=>{
+    delete overrides[dkey(selected)];
+    editOv = null; renderAll(); save();
+  });
+}
+
+function toggleBlock(num){
+  const m = doneOf(selected);
+  const on = m.includes(num);
+  setDone(selected, on ? m.filter(x=>x!==num) : m.concat(num).sort((a,b)=>a-b));
+  linkBlock(selected, num, !on);
+  renderAll(); save();
+}
+/* כל בלוק שמסומן נרשם על השיעור והשלב הפעילים */
+function linkBlock(i, num, on){
+  const k = dkey(i)+":"+num;
+  if(!on){ delete blockLink[k]; return; }
+  const a = assign[k];
+  if(a && a.stage === "review"){ blockLink[k] = {stage:"review"}; return; }
+  const src = a || {lesson:focus.lesson, stage:focus.stage};
+  blockLink[k] = {lesson:src.lesson, stage:src.stage};
+  /* סימון בלוק מקדם את ההתקדמות בשיעור */
+  const l = lsn(src.lesson);
+  if(a && a.stage === "study") l.read = Math.max(l.read, a.b);
+  if(a && a.stage === "quest") l.qDone = Math.max(l.qDone, a.b);
+  if(a && a.stage === "recall") l.recall = true;
+}
+function blockLabel(i, num, fallback){
+  const a = assignLabel(dkey(i), num);
+  if(a) return a;
+  const lk = blockLink[dkey(i)+":"+num];
+  if(!lk || !lk.lesson) return fallback || "";
+  const st = (STAGES.find(x=>x[0]===lk.stage)||["",""])[1];
+  return "שיעור "+lk.lesson+" · "+st;
+}
+
+function renderStats(){
+  const {target,max,marked} = totals();
+  const mins = target*45, hh = Math.floor(mins/60), mm = mins%60;
+  document.getElementById("wTarget").textContent = target;
+  document.getElementById("wMax").textContent = max;
+  document.getElementById("wHours").textContent = mm ? `${hh} ש׳ ${mm} ד׳` : `${hh} ש׳`;
+  document.getElementById("hoursCalc").textContent = `${target} בלוקים × 45 דקות`;
+  document.getElementById("wDone").textContent = marked;
+}
+
+/* ============ מבט שבועי ============ */
+function ovRows(rows, i){
+  const marks = doneOf(i);
+  return rows.map(r=>{
+    const c = "var(--"+(r.block?"study":r.tone)+")";
+    if(r.block){
+      return `<div class="ovrow study ${marks.includes(r.num)?"done":""}">
+        <div class="t ${numT(r.range)}">${r.range}</div>
+        <div class="x" style="--c:${c}">בלוק ${r.num}<small>${
+          esc(noteOf(i,r.num) || assignLabel(dkey(i), r.num) || r.focus || "")}</small></div>
+      </div>`;
+    }
+    const ml = rowMealLabel(i, r);
+    return `<div class="ovrow"><div class="t ${numT(r.range)}">${r.range}</div>
+      <div class="x" style="--c:${c}">${esc(r.what)}${ml?" — "+esc(ml):""}</div></div>`;
+  }).join("");
+}
+
+function renderOverview(){
+  const {target, marked} = totals();
+  const el = document.getElementById("ovSummary");
+  if(el) el.textContent = `${rangeText(weekStart)} · יעד ${target} · סומנו ${marked}`;
+
+  const today = todayISO();
+  document.getElementById("ovGrid").innerHTML = week.map((cfg,i)=>{
+    const dt = dayTplAt(i), nb = blocksOf(dt);
+    const rows = buildDay(i);
+    const p1 = rows.filter(r=>!r.dim), p2 = rows.filter(r=>r.dim);
+    const isToday = addDays(weekStart,i) === today;
+    return `<div class="ovcard ${nb?"":"rest"} ${isToday?"today":""}">
+      <div class="ovtop">
+        <div class="ovday">${DAYS[i]}<i>${short(addDays(weekStart,i))}${isToday?" · היום":""}</i></div>
+        ${nb ? `<div class="ovchip">${doneOf(i).length}/${dt.target}</div>` : ""}
+      </div>
+      <div class="ovtpl">${esc(dt.name)} · ${esc(eveTpl(cfg.eve).name)}</div>
+      ${p1.length ? `<div class="ovpart">עד סיום המשמרת</div>${ovRows(p1,i)}` : ""}
+      ${p2.length ? `<div class="ovpart">מסיום המשמרת עד השינה</div>${ovRows(p2,i)}` : ""}
+    </div>`;
+  }).join("");
+}
+
+/* ============ מערכת האוכל ============ */
+const dishById = id => DISHES.find(d=>d.id===id);
+const cookOf = () => cookPlan[weekStart] || {sat:"", tue:""};
+/* איזו מנה מבושלת רלוונטית ליום i: ראשון–שלישי מהמוצ״ש, רביעי–שישי משלישי */
+function cycleDish(i){
+  const c = cookOf();
+  if(i >= 0 && i <= 2) return dishById(c.sat);
+  if(i >= 3 && i <= 5) return dishById(c.tue);
+  return dishById(c.tue) || dishById(c.sat);
+}
+function mealOptions(slot, i){
+  const d = cycleDish(i);
+  if(slot === "b") return BREAKFASTS.map(x=>[x.id, x.name]);
+  if(slot === "s") return SNACKS.map(x=>[x.id, x.name]);
+  const list = [];
+  if(d) list.push(["cycle", d.name + " — " + (slot === "l" ? d.lunch : d.dinner)]);
+  DISHES.forEach(x=>{ if(!d || x.id !== d.id) list.push([x.id, x.name]); });
+  QUICK.forEach(x=>list.push([x.id, x.name]));
+  return list;
+}
+function mealName(slot, i, val){
+  if(!val) return "";
+  if(val === "cycle"){
+    const d = cycleDish(i);
+    return d ? d.name + " — " + (slot === "l" ? d.lunch : d.dinner) : "";
+  }
+  const all = [].concat(DISHES, BREAKFASTS, SNACKS, QUICK).find(x=>x.id===val);
+  return all ? all.name : "";
+}
+const mealOf = (i, slot) => menu[dkey(i)+":"+slot] || "";
+function mealLabel(i, slot){ return mealName(slot, i, mealOf(i, slot)); }
+
+/* התאמת שורת ארוחה בלוז לארוחה בתפריט לפי השעה */
+function slotForRow(r){
+  if(!r || r.tone !== "meal" || !r.t) return null;
+  const m = toMin(r.t);
+  if(m < 630) return "b";
+  if(m >= 690 && m < 870) return "l";
+  if(m >= 870 && m < 1110) return "s";
+  if(m >= 1110) return "d";
+  return null;
+}
+function rowMealLabel(i, r){
+  const slot = slotForRow(r);
+  if(!slot) return "";
+  return mealLabel(i, slot);
+}
+
+function fillMenuDefaults(){
+  const bRot = ["b1","b2","b3","b1","b2","b3","b1"];   /* חביתה, סלמון, טונה */
+  const sRot = ["s1","s2","s3","s1","s2","s4","s2"];
+  for(let i=0;i<7;i++){
+    const d = dkey(i);
+    if(!menu[d+":b"]) menu[d+":b"] = bRot[i];
+    if(!menu[d+":s"]) menu[d+":s"] = sRot[i];
+    if(!menu[d+":l"] && cycleDish(i)) menu[d+":l"] = "cycle";
+    if(!menu[d+":d"] && cycleDish(i)) menu[d+":d"] = "cycle";
+  }
+  save();
+}
+
+function renderFood(){
+  const c = cookOf();
+  document.getElementById("cookRange").textContent = rangeText(weekStart);
+  const opts = sel => `<option value="">— בחר מנה —</option>` +
+    DISHES.map(d=>`<option value="${d.id}" ${d.id===sel?"selected":""}>${esc(d.name)}</option>`).join("");
+  document.getElementById("cookSat").innerHTML = opts(c.sat);
+  document.getElementById("cookTue").innerHTML = opts(c.tue);
+
+  const info = [["מוצ״ש", c.sat],["שלישי", c.tue]].map(([lbl,id])=>{
+    const d = dishById(id);
+    if(!d) return "";
+    return `<div class="libitem"><b>${lbl}: ${esc(d.name)}</b>
+      <small>${d.servings} מנות · כ־${d.min} דק׳ · מהמקפיא: ${esc(d.freeze)}</small></div>`;
+  }).join("");
+  document.getElementById("cookInfo").innerHTML = info
+    ? `<div style="margin-top:12px">${info}</div>`
+    : `<p class="empty">בוחרים שתי מנות והשבוע מסודר.</p>`;
+
+  /* תפריט */
+  let filled = 0;
+  const grid = week.map((cfg,i)=>{
+    const d = dkey(i);
+    return `<div class="mday">
+      <div class="mday-top"><b>${DAYS[i]}</b><i>${short(d)}</i></div>
+      ${MEAL_SLOTS.map(([slot,label,time])=>{
+        const val = mealOf(i, slot);
+        if(val) filled++;
+        return `<div class="mrow"><span class="mt">${time}</span>
+          <select data-meal="${i}:${slot}">
+            <option value="">— ${label} —</option>
+            ${mealOptions(slot,i).map(([v,n])=>
+              `<option value="${v}" ${v===val?"selected":""}>${esc(n)}</option>`).join("")}
+          </select></div>`;
+      }).join("")}
+    </div>`;
+  }).join("");
+  document.getElementById("menuGrid").innerHTML = grid;
+  document.getElementById("menuNote").textContent = `${filled} מתוך 28 ארוחות`;
+
+  document.querySelectorAll("[data-meal]").forEach(sel=>{
+    sel.addEventListener("change", ()=>{
+      const [i, slot] = sel.dataset.meal.split(":");
+      const k = dkey(+i)+":"+slot;
+      if(sel.value) menu[k] = sel.value; else delete menu[k];
+      renderAll(); save();
+    });
+  });
+
+  /* מאגרים */
+  document.getElementById("libDishes").innerHTML = DISHES.map(d=>
+    `<div class="libitem"><b>${esc(d.name)}</b>
+      <small>${d.servings} מנות · ${d.min} דק׳</small></div>`).join("");
+  const lib = arr => arr.map(x=>
+    `<div class="libitem"><b>${esc(x.name)}</b><small>${x.min} דק׳</small></div>`).join("");
+  document.getElementById("libB").innerHTML = lib(BREAKFASTS);
+  document.getElementById("libS").innerHTML = lib(SNACKS);
+  document.getElementById("libQ").innerHTML = lib(QUICK);
+}
+
+/* ============ מסך הקורס ============ */
+function focusHTML(){
+  const n = focus.lesson, l = lsn(n);
+  return `<div class="focus">
+    <div class="frow">
+      <span class="flbl">שיעור</span>
+      <select id="fLesson" style="width:auto;min-width:120px">
+        ${lessonList().map(k=>`<option value="${k}" ${k===n?"selected":""}>שיעור ${k}${
+          lessonDone(k)?" ✓":""}</option>`).join("")}
+      </select>
+      <span class="flbl">${Math.round(lessonPct(n)*100)}% הושלם</span>
+    </div>
+    <div class="stages">
+      ${STAGES.map(([st,label])=>`<button class="stg ${focus.stage===st?"on":""} ${
+        stageDone(n,st)?"fin":""}" data-stg="${st}">${label}${stageDone(n,st)?" ✓":""}</button>`).join("")}
+    </div>
+    ${focus.stage === "study" ? `
+      <div class="frow"><span class="flbl">עמודים</span>
+        <div class="counter">
+          <button data-pg="-${course.pagesPerBlock}">−</button>
+          <b>${l.read} / ${l.pages}</b>
+          <button data-pg="${course.pagesPerBlock}">+</button>
+        </div>
+        <button class="ghost" data-pg="5">+5</button>
+        <button class="ghost" data-pgset="1">סיימתי הכל</button>
+      </div>
+      <div class="frow"><span class="flbl">30 דקות קריאה, ואז 15 דקות הסבר לעצמך — בלי להסתכל בדף.</span></div>` : ""}
+    ${focus.stage === "recall" ? `
+      <div class="frow">
+        <button class="btn ${l.recall?"sec":""}" id="rTog">${
+          l.recall ? "בוצע ✓ — לביטול" : "סמן שכתבתי עמוד סיכום מהזיכרון"}</button>
+      </div>
+      <div class="frow"><span class="flbl">בלי להסתכל בחומר. אחר כך משווים לסיכום.</span></div>` : ""}
+    ${focus.stage === "quest" ? `
+      <div class="frow"><span class="flbl">נענו</span>
+        <div class="counter">
+          <button data-q="-1">−</button><b>${l.qDone} / ${course.qCount}</b><button data-q="1">+</button>
+        </div>
+        <span class="flbl">טעויות</span>
+        <div class="counter">
+          <button data-qw="-1">−</button><b>${l.qWrong}</b><button data-qw="1">+</button>
+        </div>
+      </div>` : ""}
+  </div>`;
+}
+
+function bindFocus(root){
+  const sel = root.querySelector("#fLesson");
+  if(sel) sel.addEventListener("change", ()=>{ focus.lesson = +sel.value; renderAll(); save(); });
+  root.querySelectorAll("[data-stg]").forEach(b=>b.addEventListener("click", ()=>{
+    focus.stage = b.dataset.stg; renderAll(); save(); }));
+  root.querySelectorAll("[data-pg]").forEach(b=>b.addEventListener("click", ()=>{
+    const l = lsn(focus.lesson);
+    l.read = Math.max(0, Math.min(l.pages, l.read + (+b.dataset.pg)));
+    renderAll(); save(); }));
+  root.querySelectorAll("[data-pgset]").forEach(b=>b.addEventListener("click", ()=>{
+    const l = lsn(focus.lesson); l.read = l.pages; renderAll(); save(); }));
+  const rt = root.querySelector("#rTog");
+  if(rt) rt.addEventListener("click", ()=>{
+    const l = lsn(focus.lesson); l.recall = !l.recall; renderAll(); save(); });
+  root.querySelectorAll("[data-q]").forEach(b=>b.addEventListener("click", ()=>{
+    const l = lsn(focus.lesson);
+    l.qDone = Math.max(0, Math.min(course.qCount, l.qDone + (+b.dataset.q)));
+    renderAll(); save(); }));
+  root.querySelectorAll("[data-qw]").forEach(b=>b.addEventListener("click", ()=>{
+    const l = lsn(focus.lesson);
+    l.qWrong = Math.max(0, l.qWrong + (+b.dataset.qw));
+    renderAll(); save(); }));
+}
+
+function renderCourse(){
+  const p = paceInfo();
+  const cur = lessonList().find(n=>!lessonDone(n)) || course.total;
+  const pct = Math.round((completedLessons()/lessonList().length)*100);
+  document.getElementById("courseGoal").innerHTML = `
+    <div class="gtop">
+      <div>
+        <div class="gbig">${esc(course.name)} — שיעור ${cur} מתוך ${course.total}</div>
+        <div class="gsub">יעד סיום ${short(course.deadline)} · נותרו ${p.rem} שיעורים ב־${p.wl} שבועות</div>
+      </div>
+      <div class="pace ${p.late?"late":"ok"}">${p.need.toFixed(1)} שיעורים לשבוע</div>
+    </div>
+    <div class="gbar"><i style="width:${pct}%"></i></div>
+    <div class="ckpt">
+      נדרשים <b>${p.needBlocks}</b> בלוקים · זמינים <b>${p.haveBlocks}</b> עד ${short(course.deadline)}
+      <br>${p.needBlocks > p.haveBlocks
+        ? `חסרים ${p.needBlocks - p.haveBlocks} בלוקים. להזיז את היעד, או לקצר את ההשמעה בעל פה.`
+        : (p.need > p.planned + 0.15
+            ? `נדרשים ${p.need.toFixed(1)} שיעורים בשבוע — מעל הקצב שנקבע.`
+            : `בקצב. הקצב שנקבע הוא 2 שיעורים בשבוע.`)}
+    </div>`;
+
+  const fb = document.getElementById("focusBox");
+  fb.innerHTML = focusHTML();
+  bindFocus(fb);
+  document.getElementById("focusNote").textContent =
+    `${lessonBlocks(focus.lesson)} בלוקים משוערים לשיעור`;
+
+  /* שיעורי השבוע + מחשבון עומס */
+  document.getElementById("wkRange").textContent = rangeText(weekStart);
+  const plan = planOf();
+  document.getElementById("wkChips").innerHTML = lessonList().map(n=>`
+    <button class="wkchip ${plan.indexOf(n)>-1?"on":""}" data-wk="${n}">
+      שיעור ${n}${lessonDone(n)?" ✓":""}</button>`).join("");
+  document.querySelectorAll("[data-wk]").forEach(b=>b.addEventListener("click", ()=>{
+    const n = +b.dataset.wk;
+    const cur = planOf().slice();
+    const i = cur.indexOf(n);
+    if(i > -1) cur.splice(i,1); else cur.push(n);
+    weekPlan[weekStart] = cur.sort((a,b)=>a-b);
+    renderCourse(); save();
+  }));
+
+  const nd = weekNeed();
+  const have = availableBlocks(weekStart);
+  const box = document.getElementById("loadBox");
+  box.className = "loadbox" + (nd.total > have ? " over" : "");
+  box.innerHTML = plan.length
+    ? `<b>${plan.length} שיעורים = ${nd.lessonsBlocks} בלוקים</b>${
+        nd.rev ? ` + ${nd.rev} בלוקי חזרה = <b>${nd.total}</b>` : ""}
+       · יש לך ${have} בלוקים ביעד השבועי
+       ${nd.total > have
+         ? `<br>חסרים ${nd.total-have} בלוקים. הם ישובצו כ"לא נכנס השבוע" — אפשר לכסות אותם בבלוקים עודפים ביום שקט.`
+         : `<br>מתאים. נשארו ${have-nd.total} בלוקים כמרווח.`}`
+    : "בחר שיעורים לשבוע כדי לראות אם הם נכנסים בזמן.";
+
+  /* תצוגת השיבוץ */
+  const prev = document.getElementById("allocPreview");
+  let rowsHtml = "";
+  for(let i=0;i<7;i++){
+    const d = dkey(i), dt = dayTplAt(i);
+    const items = [];
+    buildDay(i).filter(r=>r.block).forEach(r=>{
+      const lab = assignLabel(d, r.num);
+      if(lab) items.push(`<div class="ovrow"><div class="t num">${r.t}</div>
+        <div class="x" style="--c:var(--study)">${lab}</div></div>`);
+    });
+    if(items.length) rowsHtml += `<div class="ovpart">${DAYS[i]} ${short(d)}</div>${items.join("")}`;
+  }
+  prev.innerHTML = rowsHtml
+    ? `<div style="margin-top:12px">${rowsHtml}
+        ${unassigned.length ? `<div class="loadbox over" style="margin-top:12px">
+          <b>לא נכנס השבוע (${unassigned.length} בלוקים):</b><br>
+          ${unassigned.slice(0,8).map(itemLabel).join("<br>")}
+          ${unassigned.length>8?"<br>ועוד "+(unassigned.length-8):""}</div>` : ""}</div>`
+    : "";
+
+  /* רשימת שיעורים */
+  document.getElementById("lsnNote").textContent =
+    `${completedLessons()} הושלמו · ${remainingLessons()} נותרו`;
+  document.getElementById("lsnList").innerHTML = lessonList().map(n=>{
+    const l = lsn(n);
+    const r = Math.min(100, l.pages ? Math.round(l.read/l.pages*100) : 0);
+    const q = Math.min(100, Math.round(l.qDone/course.qCount*100));
+    return `<div class="lsn ${lessonDone(n)?"done":""} ${n===focus.lesson?"active":""}">
+      <b>שיעור ${n}</b>
+      <div class="bars">
+        <div class="sb"><i style="width:${r}%"></i></div>
+        <div class="sb"><i style="width:${q}%"></i></div>
+        <div class="sb"><i style="width:${l.recall?100:0}%"></i></div>
+      </div>
+      <small>${l.read}/${l.pages} עמ׳ · ${l.qDone}/${course.qCount} ש׳${
+        l.qWrong?` · ${l.qWrong} טעויות`:""}</small>
+      <button class="go" data-goto="${n}">פוקוס</button>
+    </div>`;
+  }).join("");
+  document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click", ()=>{
+    focus.lesson = +b.dataset.goto;
+    const nxt = STAGES.find(([st])=>!stageDone(focus.lesson, st));
+    focus.stage = nxt ? nxt[0] : "read";
+    renderAll(); save();
+  }));
+
+  /* בנק טעויות */
+  const open = errorsBank.filter(e=>!e.done).length;
+  document.getElementById("errNote").textContent =
+    errorsBank.length ? `${open} פתוחות מתוך ${errorsBank.length}` : "ריק";
+  document.getElementById("errList").innerHTML = errorsBank.length
+    ? errorsBank.map((e,i)=>`<div class="errrow ${e.done?"on":""}">
+        <span class="tick" data-err="${i}" role="checkbox" aria-checked="${!!e.done}"></span>
+        <span class="txt">${esc(e.text)}<small>שיעור ${e.lesson}</small></span>
+        <button class="del" data-delerr="${i}" aria-label="מחק">×</button></div>`).join("")
+    : `<p class="empty">כשתטעה בשאלה — תרשום אותה כאן. זו רשימת החזרה שלך.</p>`;
+  document.querySelectorAll("[data-err]").forEach(b=>b.addEventListener("click", ()=>{
+    const i = +b.dataset.err; errorsBank[i].done = !errorsBank[i].done; renderCourse(); save(); }));
+  document.querySelectorAll("[data-delerr]").forEach(b=>b.addEventListener("click", ()=>{
+    errorsBank.splice(+b.dataset.delerr,1); renderCourse(); save(); }));
+
+  /* הגדרות */
+  const set = (id,v)=>{ const el = document.getElementById(id); if(el) el.value = v; };
+  set("cName", course.name); set("cTotal", course.total);
+  set("cDeadline", course.deadline);
+  set("cPpb", course.pagesPerBlock); set("cQmin", course.qMinutes);
+}
+
+/* ============ מטרות, סיכום, מגמה ============ */
+function renderGoals(){
+  const list = document.getElementById("goalsList");
+  const d = goals.filter(g=>g.done).length;
+  document.getElementById("goalsCount").textContent =
+    goals.length ? `${d} מתוך ${goals.length} הושלמו` : "עדיין לא הגדרת מטרות";
+  list.innerHTML = goals.length
+    ? goals.map((g,i)=>`<div class="goal ${g.done?"on":""}">
+        <span class="tick" role="checkbox" tabindex="0" aria-checked="${g.done}" data-goal="${i}"></span>
+        <span class="txt" data-goal="${i}">${esc(g.text)}</span>
+        <button class="del" data-delgoal="${i}" aria-label="מחק">×</button></div>`).join("")
+    : `<p class="empty">מטרה טובה היא משהו שאפשר לסמן בסוף השבוע — לא "ללמוד יותר".</p>`;
+
+  const lg = document.getElementById("lgList");
+  const ld = longGoals.filter(g=>g.done).length;
+  document.getElementById("lgCount").textContent =
+    longGoals.length ? `${ld} מתוך ${longGoals.length} הושלמו` : "אין יעדים ארוכים";
+  lg.innerHTML = longGoals.length
+    ? longGoals.map((g,i)=>`<div class="lg ${g.done?"on":""}">
+        <span class="tick" role="checkbox" tabindex="0" aria-checked="${g.done}" data-lg="${i}"></span>
+        <span class="txt" data-lg="${i}">${esc(g.text)}</span>
+        <button class="del" data-dellg="${i}" aria-label="מחק">×</button></div>`).join("")
+    : `<p class="empty">יעד ארוך נותן לשבועות כיוון. בלעדיו כל שבוע עומד לבד.</p>`;
+
+  const bind = (sel, arr, refresh) => document.querySelectorAll(sel).forEach(el=>{
+    const hit = ()=>{ const i=+el.dataset[refresh]; arr[i].done=!arr[i].done; renderPage2(); renderToday(); save(); };
+    el.addEventListener("click", hit);
+    el.addEventListener("keydown", e=>{ if(e.key===" "||e.key==="Enter"){ e.preventDefault(); hit(); } });
+  });
+  bind("[data-goal]", goals, "goal");
+  bind("[data-lg]", longGoals, "lg");
+  document.querySelectorAll("[data-delgoal]").forEach(b=>b.addEventListener("click",()=>{
+    goals.splice(+b.dataset.delgoal,1); renderPage2(); renderToday(); save(); }));
+  document.querySelectorAll("[data-dellg]").forEach(b=>b.addEventListener("click",()=>{
+    longGoals.splice(+b.dataset.dellg,1); renderPage2(); save(); }));
+}
+
+function renderReview(){
+  const k = CRITERIA.filter(c => review[c[0]]).length;
+  const [word, sub] = weekVerdict(k);
+  document.getElementById("critsList").innerHTML = CRITERIA.map(([key,title,desc])=>`
+    <button class="crit ${review[key]?"on":""}" role="checkbox" aria-checked="${!!review[key]}" data-crit="${key}">
+      <span class="tick"></span><span><b>${title}</b><small>${desc}</small></span></button>`).join("");
+  document.getElementById("verdict").innerHTML = `<b>${word}</b><span>${sub}</span>`;
+  document.querySelectorAll("[data-crit]").forEach(b=>b.addEventListener("click",()=>{
+    review[b.dataset.crit] = !review[b.dataset.crit]; renderPage2(); save(); }));
+}
+
+function renderTrend(){
+  const svg = document.getElementById("trendChart");
+  const data = history.slice(-12);
+  document.getElementById("trendNote").textContent =
+    data.length ? `${data.length} שבועות אחרונים` : "צריך שבוע סגור אחד לפחות";
+  if(!data.length){
+    svg.innerHTML = `<text x="300" y="90" text-anchor="middle" class="lbl">
+      אחרי סגירת השבוע הראשון יופיע כאן גרף מגמה</text>`;
+    return;
+  }
+  const W=600, H=170, pad=26, base=H-30;
+  const maxV = Math.max(10, ...data.map(d=>d.marked));
+  const bw = Math.min(46, (W-pad*2)/data.length - 8);
+  const step = (W-pad*2)/data.length;
+  let out = `<line x1="${pad}" y1="${base}" x2="${W-pad}" y2="${base}" stroke="#E7ECF4" stroke-width="1"/>`;
+  data.forEach((d,i)=>{
+    const x = W - pad - step*i - step/2;          /* מימין לשמאל */
+    const h = Math.round((d.marked/maxV)*(base-34));
+    out += `<rect x="${x-bw/2}" y="${base-h}" width="${bw}" height="${h}" rx="5" fill="#2FA394" opacity=".85"/>`;
+    out += `<text x="${x}" y="${base-h-6}" text-anchor="middle" class="val">${d.marked}</text>`;
+    out += `<text x="${x}" y="${base+14}" text-anchor="middle" class="lbl">${d.range.split("–")[0]}</text>`;
+    const nc = d.critsTotal || 5;
+    for(let c=0;c<nc;c++){
+      out += `<circle cx="${x-(nc-1)*4+c*8}" cy="${base+26}" r="3"
+        fill="${c < d.crits ? "#7A69CE" : "#E1E8F1"}"/>`;
+    }
+  });
+  svg.innerHTML = out;
+}
+
+function renderHistory(){
+  const list = document.getElementById("histList");
+  document.getElementById("histCount").textContent =
+    history.length ? `${history.length} שבועות שמורים` : "עדיין ריק";
+  list.innerHTML = history.length
+    ? history.slice().reverse().map(h=>`
+      <div class="hitem">
+        <div class="hrow">
+          <b>${h.range}</b>
+          <small>${h.marked} בלוקים · ${h.crits} מתוך ${h.critsTotal||5} · ${h.goalsDone}/${h.goalsTotal} מטרות</small>
+          ${(h.days&&h.days.length)||(h.goalTexts&&h.goalTexts.length)
+            ? `<button class="ghost" data-hdet="${h.start}">פרטים</button>` : ""}
+          <button class="del" data-delhist="${h.start}" aria-label="מחק">×</button>
+        </div>
+        <div class="hdet" id="hd-${h.start}" hidden>
+          ${(h.days||[]).map(d=>`<div class="hday"><b>${d.day} ${short(d.date)}</b>
+            <span>${esc(d.tpl)} · ${d.marked}/${d.target} בלוקים${
+      d.lessons && Object.keys(d.lessons).length
+        ? " · " + Object.entries(d.lessons).map(([n,c])=>`שיעור ${n} (${c})`).join(", ") : ""}</span>
+            ${Object.keys(d.notes||{}).length
+              ? `<ul>${Object.entries(d.notes).map(([n,t])=>
+                  `<li>בלוק ${n} — ${esc(t)}</li>`).join("")}</ul>` : ""}
+          </div>`).join("")}
+          ${(h.goalTexts||[]).length ? `<div class="hday"><b>מטרות</b>
+            <ul>${h.goalTexts.map(g=>`<li>${g.done?"✓":"○"} ${esc(g.text)}</li>`).join("")}</ul></div>` : ""}
+        </div>
+      </div>`).join("")
+    : `<p class="empty">שבוע שנסגר יופיע כאן, וכך תראה אם השגרה מחזיקה לאורך זמן.</p>`;
+  list.querySelectorAll("[data-hdet]").forEach(b=>b.addEventListener("click",()=>{
+    const el = document.getElementById("hd-"+b.dataset.hdet);
+    el.hidden = !el.hidden;
+    b.textContent = el.hidden ? "פרטים" : "סגור";
+  }));
+  list.querySelectorAll("[data-delhist]").forEach(b=>b.addEventListener("click",()=>{
+    history = history.filter(h=>h.start !== b.dataset.delhist); renderPage2(); save(); }));
+}
+
+function renderQuote(){
+  let i = Math.floor(Math.random()*QUOTES.length);
+  if(QUOTES.length > 1 && i === lastQuote) i = (i+1) % QUOTES.length;
+  lastQuote = i;
+  const [cat, text, src] = QUOTES[i];
+  document.getElementById("quoteBox").innerHTML = `
+    <p class="qtext">${text}</p>
+    <div class="qmeta">${cat}${src ? " · "+src : ""}</div>
+    <button class="qnext" id="nextQuote" aria-label="משפט נוסף">↻</button>`;
+  document.getElementById("nextQuote").addEventListener("click", renderQuote);
+}
+
+function closeWeek(){
+  const {marked} = totals();
+  /* ארכיון מפורט — מה נלמד בפועל, לא רק כמה */
+  const days = week.map((cfg,i)=>{
+    const dt = dayTplAt(i), d = dkey(i), m = doneOf(i);
+    const ns = {};
+    m.forEach(num=>{ const t = notes[d+":"+num]; if(t) ns[num] = t; });
+    const lsns = {};
+    m.forEach(num=>{
+      const lk = blockLink[d+":"+num];
+      if(lk) lsns[lk.lesson] = (lsns[lk.lesson]||0) + 1;
+    });
+    return {date:d, day:DAYS[i], tpl:dt.name, eve:eveTpl(cfg.eve).name,
+            target:dt.target, marked:m.length, notes:ns, lessons:lsns};
+  }).filter(x=>x.marked || x.target);
+
+  history.push({
+    start: weekStart, range: rangeText(weekStart), marked,
+    crits: CRITERIA.filter(c=>review[c[0]]).length, critsTotal: CRITERIA.length,
+    goalsDone: goals.filter(g=>g.done).length, goalsTotal: goals.length,
+    goalTexts: goals.map(g=>({text:g.text, done:!!g.done})),
+    days
+  });
+
+  /* ניקוי המפתחות של השבוע שנסגר בלבד — שבועות אחרים נשארים */
+  for(let i=0;i<7;i++){
+    const d = dkey(i);
+    delete done[d];
+    Object.keys(notes).forEach(k=>{ if(k.indexOf(d+":") === 0) delete notes[k]; });
+    Object.keys(blockLink).forEach(k=>{ if(k.indexOf(d+":") === 0) delete blockLink[k]; });
+    Object.keys(assign).forEach(k=>{ if(k.indexOf(d+":") === 0) delete assign[k]; });
+    delete overrides[d];
+  }
+  weekStart = addDays(weekStart,7);
+  review = {};
+  goals = goals.map(g=>({text:g.text, done:false}));
+  renderAll(); save();
+}
+
+function renderPage2(){ renderGoals(); renderReview(); renderTrend(); renderHistory(); }
+
+/* ============ כלים: תבניות ============ */
+/* נרמול שעה לפורמט 24 שעות — "930" → 09:30, "9:5" → 09:05 */
+function normTime(v){
+  const raw = String(v||"").trim();
+  if(!raw) return "";
+  let hh, mm;
+  if(raw.indexOf(":") > -1){
+    const p = raw.split(":");
+    hh = parseInt((p[0]||"").replace(/\D/g,""), 10);
+    mm = parseInt((p[1]||"0").replace(/\D/g,"") || "0", 10);
+  } else {
+    const d = raw.replace(/\D/g,"");
+    if(!d) return "";
+    if(d.length <= 2){ hh = +d; mm = 0; }
+    else { mm = +d.slice(-2); hh = +d.slice(0,-2); }
+  }
+  if(isNaN(hh)) return "";
+  if(isNaN(mm)) mm = 0;
+  hh = Math.min(23, Math.max(0, hh));
+  mm = Math.min(59, Math.max(0, mm));
+  return String(hh).padStart(2,"0")+":"+String(mm).padStart(2,"0");
+}
+const timeInput = (val, attr, cls) =>
+  `<input class="${cls||"t1"} tm" type="text" inputmode="numeric" maxlength="5"
+          placeholder="00:00" value="${val||""}" ${attr}>`;
+
+function toneSelect(v, attrs){
+  return `<select ${attrs||""} class="tone">${TONES.map(([k,n])=>
+    `<option value="${k}" ${k===v?"selected":""}>${n}</option>`).join("")}</select>`;
+}
+
+function renderTools(){
+  const dl = document.getElementById("dayTplList");
+  const all = allDays();
+  document.getElementById("dtCount").textContent =
+    `${Object.keys(customDays).length} שלי · ${Object.keys(BUILTIN_DAYS).length} מובנות`;
+  dl.innerHTML = Object.entries(all).map(([k,v])=>`
+    <div class="tpl"><b>${esc(v.name)}</b>
+      <small>${blocksOf(v)} בלוקים · עד ${v.ends}</small>
+      <span class="tag ${customDays[k]?"mine":""}">${customDays[k]?"שלי":"מובנית"}</span>
+      <button class="ghost" data-editday="${k}">${customDays[k]?"ערוך":"שכפל"}</button>
+      ${customDays[k]?`<button class="del" data-deldaytpl="${k}">×</button>`:""}
+    </div>`).join("");
+
+  const el = document.getElementById("eveTplList");
+  const alle = allEves();
+  document.getElementById("etCount").textContent =
+    `${Object.keys(customEves).length} שלי · ${Object.keys(BUILTIN_EVES).length} מובנות`;
+  el.innerHTML = Object.entries(alle).map(([k,v])=>`
+    <div class="tpl"><b>${esc(v.name)}</b>
+      <small>${v.items.length} שלבים</small>
+      <span class="tag ${customEves[k]?"mine":""}">${customEves[k]?"שלי":"מובנית"}</span>
+      <button class="ghost" data-editeve="${k}">${customEves[k]?"ערוך":"שכפל"}</button>
+      ${customEves[k]?`<button class="del" data-deleveTpl="${k}">×</button>`:""}
+    </div>`).join("");
+
+  dl.querySelectorAll("[data-editday]").forEach(b=>b.addEventListener("click",()=>{
+    const k = b.dataset.editday, src = all[k];
+    editDay = customDays[k]
+      ? {key:k, name:src.name, ends:src.ends, target:src.target, rows:src.rows.map(r=>({...r}))}
+      : {key:"d"+Date.now(), name:src.name+" — עותק", ends:src.ends, target:src.target,
+         rows:src.rows.map(r=>({...r}))};
+    renderDayEditor();
+  }));
+  dl.querySelectorAll("[data-deldaytpl]").forEach(b=>b.addEventListener("click",()=>{
+    const k = b.dataset.deldaytpl;
+    delete customDays[k];
+    week.forEach(w=>{ if(w.day === k) w.day = "none"; });
+    editDay = null; renderAll(); save();
+  }));
+  el.querySelectorAll("[data-editeve]").forEach(b=>b.addEventListener("click",()=>{
+    const k = b.dataset.editeve, src = alle[k];
+    editEve = customEves[k]
+      ? {key:k, name:src.name, items:src.items.map(x=>[...x])}
+      : {key:"e"+Date.now(), name:src.name+" — עותק", items:src.items.map(x=>[...x])};
+    renderEveEditor();
+  }));
+  el.querySelectorAll("[data-deleveTpl]").forEach(b=>b.addEventListener("click",()=>{
+    const k = b.dataset.deleveTpl;
+    delete customEves[k];
+    week.forEach(w=>{ if(w.eve === k) w.eve = "none"; });
+    editEve = null; renderAll(); save();
+  }));
+
+  renderDayEditor(); renderEveEditor();
+}
+
+function renderDayEditor(){
+  const box = document.getElementById("dayTplEditor");
+  if(!editDay){ box.innerHTML = ""; return; }
+  box.innerHTML = `
+    <div class="ed">
+      <div class="edhead">
+        <input type="text" id="edName" value="${esc(editDay.name)}" placeholder="שם התבנית">
+        ${timeInput(editDay.ends, 'id="edEnds"', "ends")}
+      </div>
+      <label class="field"><span>יעד בלוקים ליום</span>
+        <input type="number" id="edTarget" min="0" max="20" value="${editDay.target}"></label>
+      ${editDay.rows.map((r,i)=>`
+        <div class="edrow">
+          ${timeInput(r.t, 'data-rt="'+i+'"')}
+          <input class="txt" type="text" value="${esc(r.block?(r.focus||""):(r.what||""))}"
+                 placeholder="${r.block?"נושא הבלוק":"פעילות"}" data-rw="${i}">
+          ${r.block ? `<span class="tag mine">בלוק</span>` : toneSelect(r.tone, 'data-rc="'+i+'"')}
+          <button class="x" data-rx="${i}" aria-label="מחק שורה">×</button>
+        </div>`).join("")}
+      <div class="actions">
+        <button class="ghost" id="addRow">הוסף שורה</button>
+        <button class="ghost" id="addBlockRow">הוסף בלוק לימוד</button>
+        <div class="spacer"></div>
+        <button class="ghost" id="cancelDayTpl">ביטול</button>
+        <button class="btn" id="saveDayTpl">שמור תבנית</button>
+      </div>
+    </div>`;
+
+  box.querySelectorAll("[data-rt]").forEach(inp=>inp.addEventListener("change",()=>{
+    const v = normTime(inp.value);
+    inp.value = v;
+    editDay.rows[+inp.dataset.rt].t = v || null; }));
+  box.querySelectorAll("[data-rw]").forEach(inp=>inp.addEventListener("input",()=>{
+    const r = editDay.rows[+inp.dataset.rw];
+    if(r.block) r.focus = inp.value; else r.what = inp.value; }));
+  box.querySelectorAll("[data-rc]").forEach(sel=>sel.addEventListener("change",()=>{
+    editDay.rows[+sel.dataset.rc].tone = sel.value; }));
+  box.querySelectorAll("[data-rx]").forEach(b=>b.addEventListener("click",()=>{
+    editDay.rows.splice(+b.dataset.rx,1); renderDayEditor(); }));
+  document.getElementById("addRow").addEventListener("click",()=>{
+    editDay.rows.push({t:"08:00", what:"", tone:"personal"}); renderDayEditor(); });
+  document.getElementById("addBlockRow").addEventListener("click",()=>{
+    editDay.rows.push({t:"08:30", block:true, focus:"", tone:"study"}); renderDayEditor(); });
+  document.getElementById("cancelDayTpl").addEventListener("click",()=>{ editDay=null; renderDayEditor(); });
+  document.getElementById("saveDayTpl").addEventListener("click",()=>{
+    editDay.name = document.getElementById("edName").value.trim() || "תבנית ללא שם";
+    editDay.ends = normTime(document.getElementById("edEnds").value) || "16:00";
+    editDay.target = Math.max(0, +document.getElementById("edTarget").value || 0);
+    editDay.rows.sort((a,b)=> (a.t||"99:99").localeCompare(b.t||"99:99"));
+    customDays[editDay.key] = {name:editDay.name, ends:editDay.ends,
+      target:editDay.target, rows:editDay.rows.map(r=>({...r}))};
+    editDay = null; renderAll(); save();
+  });
+}
+
+function renderOvEditor(){
+  const box = document.getElementById("ovEditor");
+  if(!editOv){ box.innerHTML = ""; return; }
+  box.innerHTML = `
+    <div class="panel">
+      <div class="dv-head"><h3>התאמה ליום ${short(editOv.date)}</h3>
+        <div class="scale">חל על התאריך הזה בלבד</div></div>
+      <div class="ed">
+        <div class="edhead">
+          <input type="text" id="ovName" value="${esc(editOv.name)}" placeholder="שם היום">
+          ${timeInput(editOv.ends, 'id="ovEnds"', "ends")}
+        </div>
+        <label class="field"><span>יעד בלוקים ליום הזה</span>
+          <input type="number" id="ovTarget" min="0" max="20" value="${editOv.target}"></label>
+        ${editOv.rows.map((r,i)=>`
+          <div class="edrow">
+            ${timeInput(r.t, 'data-ot="'+i+'"')}
+            <input class="txt" type="text" value="${esc(r.block?(r.focus||""):(r.what||""))}"
+                   placeholder="${r.block?"נושא הבלוק":"פעילות"}" data-ow="${i}">
+            ${r.block ? `<span class="tag mine">בלוק</span>` : toneSelect(r.tone, 'data-oc="'+i+'"')}
+            <button class="x" data-ox="${i}" aria-label="מחק שורה">×</button>
+          </div>`).join("")}
+        <div class="actions">
+          <button class="ghost" id="ovAddRow">הוסף שורה</button>
+          <button class="ghost" id="ovAddBlock">הוסף בלוק</button>
+          <div class="spacer"></div>
+          <button class="ghost" id="ovCancel">ביטול</button>
+          <button class="btn" id="ovSave">שמור ליום הזה</button>
+        </div>
+      </div>
+    </div>`;
+
+  box.querySelectorAll("[data-ot]").forEach(inp=>inp.addEventListener("change",()=>{
+    const v = normTime(inp.value);
+    inp.value = v;
+    editOv.rows[+inp.dataset.ot].t = v || null; }));
+  box.querySelectorAll("[data-ow]").forEach(inp=>inp.addEventListener("input",()=>{
+    const r = editOv.rows[+inp.dataset.ow];
+    if(r.block) r.focus = inp.value; else r.what = inp.value; }));
+  box.querySelectorAll("[data-oc]").forEach(sel=>sel.addEventListener("change",()=>{
+    editOv.rows[+sel.dataset.oc].tone = sel.value; }));
+  box.querySelectorAll("[data-ox]").forEach(b=>b.addEventListener("click",()=>{
+    editOv.rows.splice(+b.dataset.ox,1); renderOvEditor(); }));
+  document.getElementById("ovAddRow").addEventListener("click",()=>{
+    editOv.rows.push({t:"08:00", what:"", tone:"personal"}); renderOvEditor(); });
+  document.getElementById("ovAddBlock").addEventListener("click",()=>{
+    editOv.rows.push({t:"08:30", block:true, focus:"", tone:"study"}); renderOvEditor(); });
+  document.getElementById("ovCancel").addEventListener("click",()=>{ editOv=null; renderOvEditor(); });
+  document.getElementById("ovSave").addEventListener("click",()=>{
+    const rows = editOv.rows.slice().sort((a,b)=>(a.t||"99:99").localeCompare(b.t||"99:99"));
+    overrides[editOv.date] = {
+      name: (document.getElementById("ovName").value.trim() || "יום מותאם"),
+      ends: normTime(document.getElementById("ovEnds").value) || "16:00",
+      target: Math.max(0, +document.getElementById("ovTarget").value || 0),
+      rows: rows.map(r=>({...r}))
+    };
+    editOv = null; renderAll(); save();
+  });
+}
+
+function renderEveEditor(){
+  const box = document.getElementById("eveTplEditor");
+  if(!editEve){ box.innerHTML = ""; return; }
+  box.innerHTML = `
+    <div class="ed">
+      <input type="text" id="evName" value="${esc(editEve.name)}" placeholder="שם התבנית">
+      <p class="hint" style="margin:0">כל שלב מוגדר במשך בדקות, ומתחיל מרגע סיום היום.</p>
+      ${editEve.items.map((it,i)=>`
+        <div class="edrow">
+          <input class="mins" type="number" min="5" step="5" value="${it[1]===null?"":it[1]}"
+                 placeholder="דק׳" data-em="${i}">
+          <input class="txt" type="text" value="${esc(it[0])}" placeholder="פעילות" data-ew="${i}">
+          ${toneSelect(it[2], 'data-ec="'+i+'"')}
+          <button class="x" data-ex="${i}" aria-label="מחק שלב">×</button>
+        </div>`).join("")}
+      <div class="actions">
+        <button class="ghost" id="addEveRow">הוסף שלב</button>
+        <div class="spacer"></div>
+        <button class="ghost" id="cancelEveTpl">ביטול</button>
+        <button class="btn" id="saveEveTpl">שמור תבנית</button>
+      </div>
+    </div>`;
+
+  box.querySelectorAll("[data-em]").forEach(inp=>inp.addEventListener("input",()=>{
+    editEve.items[+inp.dataset.em][1] = inp.value === "" ? null : +inp.value; }));
+  box.querySelectorAll("[data-ew]").forEach(inp=>inp.addEventListener("input",()=>{
+    editEve.items[+inp.dataset.ew][0] = inp.value; }));
+  box.querySelectorAll("[data-ec]").forEach(sel=>sel.addEventListener("change",()=>{
+    editEve.items[+sel.dataset.ec][2] = sel.value; }));
+  box.querySelectorAll("[data-ex]").forEach(b=>b.addEventListener("click",()=>{
+    editEve.items.splice(+b.dataset.ex,1); renderEveEditor(); }));
+  document.getElementById("addEveRow").addEventListener("click",()=>{
+    editEve.items.push(["",30,"personal"]); renderEveEditor(); });
+  document.getElementById("cancelEveTpl").addEventListener("click",()=>{ editEve=null; renderEveEditor(); });
+  document.getElementById("saveEveTpl").addEventListener("click",()=>{
+    editEve.name = document.getElementById("evName").value.trim() || "תבנית ללא שם";
+    customEves[editEve.key] = {name:editEve.name,
+      items:editEve.items.filter(x=>x[0].trim()).map(x=>[...x])};
+    editEve = null; renderAll(); save();
+  });
+}
+
+/* ============ יצוא PDF ============ */
+function buildPrint(){
+  const {target,max} = totals();
+  const mins = target*45;
+  const hours = Math.floor(mins/60)+":"+String(mins%60).padStart(2,"0");
+
+  const cover = `<section class="pcover">
+      <h1>לוז שבועי</h1>
+      <div class="prange">${rangeText(weekStart)}</div>
+      <div class="pstats">
+        <div class="pstat"><b>${target}</b><span>יעד בלוקים</span></div>
+        <div class="pstat"><b>${hours}</b><span>שעות לימוד נטו</span></div>
+        <div class="pstat"><b>${max}</b><span>פוטנציאל</span></div>
+      </div>
+      ${planOf().length ? `<div class="pg"><h2>שיעורי השבוע</h2>${
+        planOf().map(n=>`<div>שיעור ${n} — ${lessonBlocks(n)} בלוקים משוערים</div>`).join("")}</div>` : ""}
+      ${goals.length ? `<div class="pg"><h2>מטרות השבוע</h2>${
+        goals.map(g=>`<div>☐ ${esc(g.text)}</div>`).join("")}</div>` : ""}
+      <div class="note">היעד הוא היעד. מה שמעבר לו הוא בונוס, לא סטנדרט חדש.</div>
+    </section>`;
+
+  const table = (rows,i) => rows.length ? `<table>${rows.map(r=>{
+      const c = TONE_HEX[r.tone] || TONE_HEX.none;
+      return r.block
+        ? `<tr class="study"><td class="pt ${numT(r.range)}">${r.range||""}</td>
+             <td class="pd" style="--c:${TONE_HEX.study}">בלוק ${r.num}<i>${
+               esc(noteOf(i,r.num) || assignLabel(dkey(i), r.num) || r.focus || "")}</i></td></tr>`
+        : `<tr><td class="pt ${numT(r.range)}">${r.range||""}</td>
+             <td class="pd" style="--c:${c}">${esc(r.what)}${(()=>{
+               const ml = rowMealLabel(i, r); return ml ? " — "+esc(ml) : "";
+             })()}</td></tr>`;
+    }).join("")}</table>` : "";
+
+  const days = week.map((cfg,i)=>{
+    const dt = dayTplAt(i), nb = blocksOf(dt);
+    const rows = buildDay(i);
+    const p1 = rows.filter(r=>!r.dim), p2 = rows.filter(r=>r.dim);
+    return `<section class="pday">
+      <div class="ph">
+        <h2>${DAYS[i]}<span>${short(addDays(weekStart,i))}</span></h2>
+        ${nb ? `<div class="chip">יעד ${dt.target} בלוקים · עד ${nb}</div>` : ""}
+      </div>
+      <div class="ptpl">${esc(dt.name)} · ${esc(eveTpl(cfg.eve).name)}</div>
+      ${p1.length ? `<h3>מההשכמה עד סיום המשמרת</h3>${table(p1,i)}` : ""}
+      ${p2.length ? `<h3>מסיום המשמרת עד השינה</h3>${table(p2,i)}` : ""}
+      <div class="pfoot"><span class="pr">${rangeText(weekStart)}</span><span>${DAYS[i]}</span></div>
+    </section>`;
+  }).join("");
+
+  document.getElementById("printarea").innerHTML = cover + days;
+}
+
+/* ============ גיבוי ============ */
+function stateObj(){
+  return {v:6, weekStart, week, done, notes, review, goals, longGoals,
+          history, customDays, customEves, overrides,
+          course, lessons, focus, weekPlan, blockLink, errorsBank, noStudy,
+          assign, unassigned, cookPlan, menu};
+}
+/* גרסאות ישנות שמרו לפי מספר יום (0..6) — ממירים לתאריכים */
+function migrateKeys(){
+  const oldD = {}, oldN = {};
+  Object.keys(done).forEach(k=>{ if(/^[0-6]$/.test(k)){ oldD[k] = done[k]; delete done[k]; } });
+  Object.keys(notes).forEach(k=>{ if(/^[0-6]:\d+$/.test(k)){ oldN[k] = notes[k]; delete notes[k]; } });
+  Object.keys(oldD).forEach(k=>{ done[addDays(weekStart, +k)] = oldD[k]; });
+  Object.keys(oldN).forEach(k=>{
+    const p = k.split(":");
+    notes[addDays(weekStart, +p[0])+":"+p[1]] = oldN[k];
+  });
+}
+function applyState(s){
+  if(s.weekStart) weekStart = s.weekStart;
+  if(s.week) week = s.week;
+  if(s.done) done = s.done;
+  if(s.notes) notes = s.notes;
+  if(s.review) review = s.review;
+  if(s.goals) goals = s.goals;
+  if(s.longGoals) longGoals = s.longGoals;
+  if(s.history) history = s.history;
+  if(s.customDays) customDays = s.customDays;
+  if(s.customEves) customEves = s.customEves;
+  if(s.overrides) overrides = s.overrides;
+  if(s.course) course = Object.assign(course, s.course);
+  course.reviewBlock = false;   /* בוטל */
+  if(!course.pagesPerBlock) course.pagesPerBlock = 20;
+  if(focus && (focus.stage === "read" || focus.stage === "verbal")) focus.stage = "study";
+  if(s.lessons) lessons = s.lessons;
+  if(s.focus) focus = s.focus;
+  if(s.weekPlan) weekPlan = s.weekPlan;
+  if(s.blockLink) blockLink = s.blockLink;
+  if(s.errorsBank) errorsBank = s.errorsBank;
+  if(s.noStudy) noStudy = s.noStudy;
+  if(s.assign) assign = s.assign;
+  if(s.unassigned) unassigned = s.unassigned;
+  if(s.cookPlan) cookPlan = s.cookPlan;
+  if(s.menu) menu = s.menu;
+  migrateKeys();
+}
+function exportBackup(){
+  const txt = JSON.stringify(stateObj(), null, 2);
+  try{
+    const blob = new Blob([txt], {type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "loz-backup-" + todayISO() + ".json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+  }catch(e){
+    showJson();
+  }
+}
+let prevState = null;
+function renderUndo(){
+  const box = document.getElementById("undoWrap");
+  if(!prevState){ box.innerHTML = ""; return; }
+  box.innerHTML = `<div class="warn">הייבוא הושלם. גיבוי של המצב הקודם ירד למכשיר.
+    <button class="ghost" id="undoImp">בטל את הייבוא</button></div>`;
+  document.getElementById("undoImp").addEventListener("click", ()=>{
+    applyState(prevState); prevState = null;
+    renderAll(); save(); renderUndo();
+  });
+}
+function showJson(){
+  const w = document.getElementById("jsonWrap");
+  w.hidden = false;
+  document.getElementById("jsonBox").value = JSON.stringify(stateObj());
+}
+
+/* ============ שמירה ============ */
+function save(){
+  try{ localStorage.setItem('loz:v6', JSON.stringify(stateObj())); }catch(e){}
+}
+function load(){
+  try{
+    const raw = localStorage.getItem('loz:v6') || localStorage.getItem('loz:v5') ||
+                localStorage.getItem('loz:v4') || localStorage.getItem('loz:v3') ||
+                localStorage.getItem('loz:v2');
+    if(raw) applyState(JSON.parse(raw));
+  }catch(e){}
+  renderAll();
+}
+
+/* ============ ציור כללי ============ */
+function renderAll(){
+  renderToday(); renderDate(); renderWeek(); renderDay();
+  renderStats(); renderOverview(); renderCourse(); renderFood(); renderPage2();
+  renderTools(); renderOvEditor();
+}
+
+/* ============ חיווט ============ */
+function showPages(){
+  const shown = tab === "more" ? ["more", subTab] : [tab];
+  document.querySelectorAll(".page").forEach(p=>
+    p.classList.toggle("on", shown.indexOf(p.id.replace("page-","")) > -1));
+  document.querySelectorAll(".nav button").forEach(x=>
+    x.classList.toggle("on", x.dataset.tab === tab));
+}
+document.querySelectorAll(".nav button").forEach(b=>{
+  b.addEventListener("click", ()=>{
+    tab = b.dataset.tab;
+    if(tab === "today"){ renderToday(); renderQuote(); }
+    showPages();
+    window.scrollTo({top:0, behavior:"smooth"});
+  });
+});
+document.querySelectorAll("#subNav button").forEach(b=>{
+  b.addEventListener("click", ()=>{
+    subTab = b.dataset.sub;
+    document.querySelectorAll("#subNav button").forEach(x=>x.classList.toggle("on", x===b));
+    showPages();
+  });
+});
+document.querySelectorAll("#planModes button").forEach(b=>{
+  b.addEventListener("click", ()=>{
+    planMode = b.dataset.mode;
+    document.querySelectorAll("#planModes button").forEach(x=>x.classList.toggle("on", x===b));
+    document.getElementById("planDayWrap").hidden = planMode !== "day";
+    document.getElementById("planWeekWrap").hidden = planMode !== "week";
+  });
+});
+document.getElementById("wstart").addEventListener("change", e=>{
+  if(!e.target.value) return;
+  weekStart = sundayOf(new Date(e.target.value + "T12:00:00"));
+  renderAll(); save();
+});
+document.getElementById("addGoal").addEventListener("click", ()=>{
+  const inp = document.getElementById("goalInput");
+  if(!inp.value.trim()) return;
+  goals.push({text:inp.value.trim(), done:false});
+  inp.value = ""; renderPage2(); renderToday(); save();
+});
+document.getElementById("goalInput").addEventListener("keydown", e=>{
+  if(e.key === "Enter") document.getElementById("addGoal").click(); });
+document.getElementById("addLg").addEventListener("click", ()=>{
+  const inp = document.getElementById("lgInput");
+  if(!inp.value.trim()) return;
+  longGoals.push({text:inp.value.trim(), done:false});
+  inp.value = ""; renderPage2(); save();
+});
+document.getElementById("lgInput").addEventListener("keydown", e=>{
+  if(e.key === "Enter") document.getElementById("addLg").click(); });
+document.getElementById("closeWeek").addEventListener("click", function(){
+  if(this.dataset.armed !== "1"){
+    this.dataset.armed = "1";
+    this.textContent = "בטוח? לחץ שוב לסגירת השבוע";
+    return;
+  }
+  this.dataset.armed = "0";
+  this.textContent = "סגור שבוע ושמור בהיסטוריה";
+  closeWeek();
+});
+document.getElementById("pdfBtn").addEventListener("click", ()=>{ buildPrint(); window.print(); });
+document.getElementById("addErr").addEventListener("click", ()=>{
+  const inp = document.getElementById("errInput");
+  if(!inp.value.trim()) return;
+  errorsBank.push({lesson:focus.lesson, text:inp.value.trim(), done:false});
+  inp.value = ""; renderAll(); save();
+});
+document.getElementById("errInput").addEventListener("keydown", e=>{
+  if(e.key === "Enter") document.getElementById("addErr").click(); });
+document.getElementById("saveCourse").addEventListener("click", ()=>{
+  course.name = document.getElementById("cName").value.trim() || course.name;
+  course.total = Math.max(1, +document.getElementById("cTotal").value || course.total);
+  course.deadline = document.getElementById("cDeadline").value || course.deadline;
+  course.pagesPerBlock = Math.max(1, +document.getElementById("cPpb").value || course.pagesPerBlock);
+  course.qMinutes = Math.max(0, +document.getElementById("cQmin").value || 0);
+  renderAll(); save();
+});
+document.getElementById("allocBtn").addEventListener("click", ()=>{
+  if(!planOf().length){ alert("קודם בחר שיעורים לשבוע."); return; }
+  buildSchedule(); renderAll();
+});
+document.getElementById("allocClear").addEventListener("click", ()=>{
+  for(let i=0;i<7;i++){
+    const d = dkey(i);
+    Object.keys(assign).forEach(k=>{ if(k.indexOf(d+":") === 0) delete assign[k]; });
+  }
+  unassigned = []; renderAll(); save();
+});
+["cookSat","cookTue"].forEach(id=>{
+  document.getElementById(id).addEventListener("change", ()=>{
+    const c = Object.assign({sat:"",tue:""}, cookOf());
+    c[id === "cookSat" ? "sat" : "tue"] = document.getElementById(id).value;
+    cookPlan[weekStart] = c;
+    renderAll(); save();
+  });
+});
+document.getElementById("menuFill").addEventListener("click", ()=>{ fillMenuDefaults(); renderAll(); });
+document.getElementById("menuClear").addEventListener("click", ()=>{
+  for(let i=0;i<7;i++){
+    const d = dkey(i);
+    MEAL_SLOTS.forEach(([slot])=>delete menu[d+":"+slot]);
+  }
+  renderAll(); save();
+});
+document.getElementById("expBtn").addEventListener("click", exportBackup);
+document.getElementById("showJson").addEventListener("click", showJson);
+document.getElementById("impBtn").addEventListener("click", ()=>{
+  document.getElementById("impFile").click();
+});
+document.getElementById("impFile").addEventListener("change", e=>{
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  const rd = new FileReader();
+  rd.onload = ()=>{
+    let s;
+    try{ s = JSON.parse(rd.result); }
+    catch(err){ alert("הקובץ לא תקין — לא בוצע שינוי."); return; }
+    if(!s || !s.week){ alert("זה לא נראה כמו קובץ גיבוי של הלוז. לא בוצע שינוי."); return; }
+
+    const info = "הקובץ מכיל: שבוע " + (s.weekStart||"?") +
+      " · " + ((s.history||[]).length) + " שבועות בהיסטוריה" +
+      " · " + ((s.goals||[]).length) + " מטרות";
+    const now = "כרגע באפליקציה: שבוע " + weekStart +
+      " · " + history.length + " שבועות בהיסטוריה";
+    if(!confirm(info + "\n" + now + "\n\nהייבוא ידרוס את הנתונים הנוכחיים. להמשיך?")) return;
+
+    prevState = JSON.parse(JSON.stringify(stateObj()));   /* גיבוי לביטול */
+    exportBackup();                                       /* וגם קובץ, ליתר ביטחון */
+    applyState(s);
+    renderAll(); save(); renderUndo();
+  };
+  rd.readAsText(f);
+  e.target.value = "";
+});
+document.getElementById("newDayTpl").addEventListener("click", ()=>{
+  editDay = {key:"d"+Date.now(), name:"תבנית יום חדשה", ends:"16:00", target:0,
+    rows:[{t:"05:25", what:"השכמה", tone:"personal"}]};
+  renderDayEditor();
+});
+document.getElementById("newEveTpl").addEventListener("click", ()=>{
+  editEve = {key:"e"+Date.now(), name:"תבנית ערב חדשה", items:[["נסיעה לדירה",30,"work"]]};
+  renderEveEditor();
+});
+
+/* שעון חי — מרענן את דף היום */
+setInterval(()=>{ if(tab === "today") renderToday(); }, 30000);
+
+renderQuote();
+load();
+</script>
+</body>
+</html>
