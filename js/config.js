@@ -6,5 +6,5 @@
    כל עוד השדות ריקים, האפליקציה עובדת במצב מקומי בלבד (בדיוק כמו עד היום) —
    בלי מסך התחברות, בלי סנכרון, הכול נשמר רק בדפדפן הזה.
 */
-const SUPABASE_URL = "https://vhrfjdfpughmzqmkuayv.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_w3v9k8J1mhoaFLYPgHOElA_VldBgO17";
+const SUPABASE_URL = "https://pitsegijcwutmnswmime.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_RpaHlw90n1u90IZVCBn33w_w4p74H-b";
